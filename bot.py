@@ -3,14 +3,13 @@ import discord
 class Bot(discord.Client):
 	def __init__(self, prefix):
 		super().__init__()
+		self.url_pdp_bot = None
 		self.prefix = prefix
 		self.list_command = []
 		self.list_listener = []
 
 	async def on_ready(self):
 		self.url_pdp_bot = self.user.avatar_url
-		self.activity = discord.Game(name="Help: rp!help")
-		await self.change_presence(status=discord.Status.online, activity=self.activity)
 		sep = 10*"-"
 		print(sep)
 		print("Logged in as")
