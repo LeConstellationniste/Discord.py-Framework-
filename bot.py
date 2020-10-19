@@ -21,20 +21,20 @@ class Bot(discord.Client):
 	async def on_message(self, message):
 		if not message.author.bot and message.content.startswith(self.prefix):
 			content = message.content[len(self.prefix):]
-			name_command = content.split(" ")[0]
-			options = content.split(" ")[1:]
+			cmd = content.split(" ")[0]
+			args = content.split(" ")[1:]
 			for command in self.list_command:
-				if name_command == command.name or name_command in command.aliases:
+				if cmd == command.name or cmd in command.aliases:
 					try:
-						return await command.function(message, *options)
+						await command.function(message, *args)
 					except TypeError:
-						return await self.argument_error(message.channel)
+						await self.argument_error(message.channel)
 
 	async def argument_error(self, channel):
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 		else:
-			msg_error = "Missing options to execute this command."
+			msg_error = "Missing args to execute this command."
 			embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
 			await channel.send(embed=embed_error)
 

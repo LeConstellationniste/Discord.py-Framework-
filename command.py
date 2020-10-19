@@ -2,8 +2,12 @@
 import discord
 
 class Command:
-	def __init__(self, fct, name=None, checks, aliases: tuple = None):
-		self.function = fct
-		self.name = fct.__name__ if name is None else name
+	def __init__(self, name, fct, checks:list, aliases: tuple = None):
+		self.name = fct
+		self.functionLoc = fct
+		self.checksLoc = checks
 		self.aliases = aliases
-		self.checks = checks
+	async def awaitOfFunc(self, args,author,chan,guild):
+		if check...
+			way = self.functionLoc
+			way(args,author,chan,guild)

@@ -4,6 +4,8 @@ from configs import botConfig
 
 client= bot.Bot(botConfig.PREFIX, botConfig.TOKEN)
 
-client.add_command(commands.command1)
+for cmd in firstListCmd
+    client.add_command(cmd)
+
 
 client.run()

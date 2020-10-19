@@ -1,6 +1,21 @@
-import command
+# Other imports:
+# 	Dont forget to import here files who contain
+# 	variable used in the cmds
+import command as create
+import bot 
 
-async def function1(message, option1):
-	await message.channel.send(f"Tu me dit : {option1}")
 
-command1 = command.Command(function1, name="command1", aliases=("C1", ))
+#from baseLauncher import client
+
+
+#commands imports
+import commands.testCmds as testcm
+
+#checks imports
+import checks.checksTest as testch
+
+commandSet1=[]
+# behind is your command set. All the cmds are created here.
+commandSet1.append(create.Command("test", testcm.testFunc, testch.checkOne))
+
+print("test")
