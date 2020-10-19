@@ -1,0 +1,2 @@
+TOKEN = "MyTokenBot"
+PREFIX = "test!"
