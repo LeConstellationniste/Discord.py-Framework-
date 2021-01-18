@@ -47,4 +47,5 @@ OR
 [discord]: https://discordpy.readthedocs.io/en/latest/api.html
 [color]: https://pypi.org/project/colorama/
 [license]: https://github.com/LeConstellationniste/Discord.py-Framework-/blob/main/LICENSE
+[changelog]: https://github.com/LeConstellationniste/Discord.py-Framework-/blob/LostPy/CHANGELOG.md
 [doc]: https://github.com/LeConstellationniste/Discord.py-Framework-/wiki
