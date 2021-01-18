@@ -12,12 +12,15 @@ async def cmd1(msg: discord.Message):
 
 
 async def cmd2(msg: discord.Message, a):
-	await msg.channel.send(f"Tu me dis {a}")
+	await msg.channel.send(f"Tu me dis\n> {a}")
 
+
+async def cmd3(msg: discord.Message, a, b):
+	await msg.channel.send(f"Le résultat est : `{a} + {b} = {int(a)+int(b)}`")
 
 # Bot
 token = "token"
 bot = Bot(">", token)
 bot.add_command(cmd1)
-bot.add_command(cmd2)
+bot.add_commands({'repeat': cmd2, 'addition': cmd3})
 bot.run()

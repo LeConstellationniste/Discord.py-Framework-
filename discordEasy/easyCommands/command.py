@@ -1,3 +1,5 @@
+from inspect import isfunction
+
 import discord
 
 from ..errors import ArgumentsError
@@ -6,7 +8,10 @@ class Command:
 	def __init__(self, _function, name: str = None, aliases: list = []):
 		self.name = name
 		self.aliases = list(aliases)
-		self._fct = _function
+		if isfunction(_function):
+			self._fct = _function
+		else:
+			raise TypeError(f"_function must be a function, not a {type(_function)}")
 
 	def check_name(self, name: str):
 		if isinstance(name, str):

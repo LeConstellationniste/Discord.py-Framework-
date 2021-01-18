@@ -50,7 +50,19 @@ class Bot(discord.Client):
 		elif inspect.isfunction(command):
 			self.commands.append(Command(command, command.__name__))
 		else:
-			raise TypeError(f"command must be a function or a command.Command, not {type(command)}")
+			raise TypeError(f"command must be a function or a Command, not {type(command)}")
+
+	def add_commands(self, commands_set):
+		if isinstance(commands_set, dict):
+			for name, cmd in commands_set.items():
+				self.add_command(Command(cmd, name=name))
+		elif isinstance(commands_set, list):
+			for cmd in commands_set:
+				self.add_command(cmd)
+		elif isinstance(commands_set, CommandSet):
+			...
+		else:
+			raise TypeError(f"commands_set must be a CommandSet, a dict or a list, not {type(command)}")
 
 	def run(self):
 		super().run(self.token)
