@@ -1,4 +1,10 @@
+import inspect
+
 import discord
+
+from .easyCommands.commandSet import CommandSet
+from .easyCommands.command import Command
+from . import errors
 
 class Bot(discord.Client):
 	def __init__(self, prefix, token):
@@ -6,8 +12,8 @@ class Bot(discord.Client):
 		self.url_pdp_bot = None
 		self.prefix = prefix
 		self.token = token
-		self.list_command = []
-		self.list_listener = []
+		self.commands = []
+		self.listeners = []
 
 	async def on_ready(self):
 		self.url_pdp_bot = self.user.avatar_url
@@ -23,11 +29,11 @@ class Bot(discord.Client):
 			content = message.content[len(self.prefix):]
 			name_command = content.split(" ")[0]
 			options = content.split(" ")[1:]
-			for command in self.list_command:
+			for command in self.commands:
 				if name_command == command.name or name_command in command.aliases:
 					try:
-						return await command.function(message, *options)
-					except TypeError:
+						return await command.execute(message, *options)
+					except errors.ArgumentsError:
 						return await self.argument_error(message.channel)
 
 	async def argument_error(self, channel):
@@ -39,10 +45,12 @@ class Bot(discord.Client):
 			await channel.send(embed=embed_error)
 
 	def add_command(self, command):
-		self.list_command.append(command)
-
-	def add_listener(self, listener):
-		...  # Il faut créer la classe Listener
+		if isinstance(command, Command):
+			self.commands.append(command)
+		elif inspect.isfunction(command):
+			self.commands.append(Command(command, command.__name__))
+		else:
+			raise TypeError(f"command must be a function or a command.Command, not {type(command)}")
 
 	def run(self):
 		super().run(self.token)
