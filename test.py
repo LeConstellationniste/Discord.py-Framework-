@@ -20,7 +20,7 @@ async def cmd3(msg: discord.Message, a, b):
 
 # Bot
 token = "token"
-bot = Bot(">", token)
+bot = Bot(">", token, send_errors=True)
 bot.add_command(cmd1)
-bot.add_commands({'repeat': cmd2, 'addition': cmd3})
+bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
 bot.run()
