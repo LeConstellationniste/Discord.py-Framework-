@@ -19,7 +19,7 @@ class Bot(discord.Client):
 		self.appInfo = None  # AppInfo instance initialized in 'on_ready' event
 		self.send_errors = send_errors  # If true, logs are send in private message to owner of bot
 		self.print_traceback = print_traceback
-		self.sep_args = " "
+		self.sep_args = sep_args
 		self.commands = []
 		self.listeners = []
 
