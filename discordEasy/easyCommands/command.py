@@ -1,4 +1,4 @@
-from inspect import isfunction, signature
+from inspect import isfunction, isroutine, iscoroutine, signature
 
 import discord
 
@@ -21,7 +21,7 @@ class Command:
 			return name == self.name or name in self.aliases
 		raise TypeError(f"`name` must be a str, not {type(name)}")
 
-	def execute(self, *args):
+	async def execute(self, *args):
 		try:
 			new_args = [args[0]] + utils.convert_list_str(list(args[1:]), self.types_options)
 		except ValueError as e:
@@ -33,7 +33,10 @@ class Command:
 			raise MissingArgumentsError(TypeError("Missing 1 or more required positional argument"), self)
 
 		try:
-			return self._fct(*new_args)
+			if isroutine(self._fct):
+				return await self._fct(*new_args)
+			else:
+				return self._fct(*new_args)
 
 		except Exception as e:
 			raise CommandError(e, self)

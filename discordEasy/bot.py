@@ -41,9 +41,12 @@ class Bot(discord.Client):
 			for command in self.commands:
 				if command.check_name(name_command):
 					try:
-						return await command.execute(message, *options)
+						await command.execute(message, *options)
 					except errors.CommandError as e:
-						return await self.on_command_error(e, message)
+						try:
+							await self.on_command_error(e, message)
+						except Exception as e:
+							await self.on_command_error(errors.CommandError(e, command), message)
 
 	async def send_error_to_owner(self, error, traceback_msg, where):
 		em = discord.Embed(title="Error raised", colour=discord.Colour.red())
@@ -52,10 +55,13 @@ class Bot(discord.Client):
 		await self.appInfo.owner.send(embed=em)
 
 	async def on_command_error(self, error, message):
+
 		if isinstance(error, errors.MissingArgumentsError):
 			await self.on_missing_arguments(message.channel)
 		elif isinstance(error, errors.DiscordTypeError):
 			await self.on_type_error(message.channel, error.cmd.types_options)
+		elif isinstance(error.origin, discord.errors.Forbidden):
+			await self.on_permission_error(message)
 		else:
 			print()
 			Logs.error(error.message)
@@ -80,6 +86,18 @@ class Bot(discord.Client):
 		msg_error = "One or several options have a bad type. The type of options must be, in order: " + utils.replace_multiple(str(types), ['class', '[', ']', '>', '<']).replace("'", "`")
 		embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
 		await channel.send(embed=embed_error)
+
+	async def on_permission_error(self, message):
+		if not isinstance(message, discord.Message):
+			raise TypeError("message must be a discord.Message")
+
+		msg_error = "Missing permission to do this command."
+		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
+		try:
+			await message.channel.send(embed=em_error)
+		except discord.errors.Forbidden:
+			em_error.description = f"Missing permission to send message in {message.channel.mention}."
+			await message.author.send(embed=em_error)
 
 	def add_command(self, command, types_options: list = []):
 		if isinstance(command, Command):
@@ -106,6 +124,7 @@ class Bot(discord.Client):
 
 		elif isinstance(commands_set, CommandSet):
 			...
+			raise TypeError("You can't already use a CommandSet with this method, it's in progress")
 
 		else:
 			raise TypeError(f"commands_set must be a CommandSet, a dict or a list, not {type(command)}")

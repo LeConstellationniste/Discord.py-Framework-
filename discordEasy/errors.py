@@ -4,12 +4,12 @@ class DiscordEasyError(Exception):
 	"""Base class for exceptions in this module."""
 
 	def __init__(self, error):
-		self.error = error
-		self.message = self.error.__repr__()
-		self._type = type(self.error)
+		self.origin = error
+		self.message = self.origin.__repr__()
+		self._type = type(self.origin)
 
 	def __repr__(self):
-		return f"{type(self)}: A error was raised: {type(self.error)}:\n{self.message}"
+		return f"{type(self)}: A error was raised: {self._type}:\n{self.message}"
 
 	def __str__(self):
 		return self.__repr__()

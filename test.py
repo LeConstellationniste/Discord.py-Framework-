@@ -19,7 +19,7 @@ async def cmd3(msg: discord.Message, a, b):
 	await msg.channel.send(f"Le résultat est : `{a} + {b} = {int(a)+int(b)}`")
 
 # Bot
-token = "token"
+token = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.PIEdlx2pA8-tvIJnrTUpugncwzc"
 bot = Bot(">", token, send_errors=True)
 bot.add_command(cmd1)
 bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
