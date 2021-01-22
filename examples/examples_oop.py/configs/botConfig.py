@@ -1,0 +1,2 @@
+TOKEN = "YourToken"
+PREFIX = "test!"
