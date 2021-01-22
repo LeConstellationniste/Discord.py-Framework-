@@ -29,7 +29,9 @@ Several features are already implemented such as the lack of arguments in a comm
  * [colorama][color] (For coulour logs)
 
 ## Installation <a id="installation"></a>
-To install this package, you can use the following command:
+To install this package, you can use the following commands.
+
+### With `pip`
 
 `pip install git+https://github.com/LeConstellationniste/Discord.py-Framework-.git@main`
 
@@ -41,6 +43,8 @@ To install this package, you can use the following command:
 OR
 
 `pip install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main -U`
+
+**Note:** If you have several Python version (2 & 3), you must use `pip3` command.
 
 
 [py]: https://www.python.org/

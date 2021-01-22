@@ -1,4 +1,4 @@
-from inspect import iscoroutinefunction
+from inspect import isroutine
 import asyncio
 
 import discord
@@ -7,15 +7,15 @@ from ..errors import DiscordEventError
 
 
 class Listener:
-	def __init__(self, _coroutine, event_name: str = None):
-		if iscoroutinefunction(_coroutine):
-			self._fct = _coroutine
+	def __init__(self, _routine, event_name: str = None):
+		if isroutine(_routine):
+			self._fct = _routine
 		else:
-			raise TypeError(f"_coroutine must be a coroutine function, not a {type(_coroutine)}")
+			raise TypeError(f"_routine must be a routine, not a {type(_routine)}")
 		self.event_name = self._fct.__name__ if event_name is None else event_name
 
 	async def execute(self, *args):
 		try:
-			return self._fct(*args)
+			return await self._fct(*args)
 		except Exception as e:
 			raise DiscordEventError(e, self)

@@ -25,18 +25,28 @@ class CommandError(DiscordEasyError):
 
 class MissingArgumentsError(CommandError):
 	"""Exception raised when a missing arguments is detected in a command."""
+
 	def __init__(self, error, command):
 		super().__init__(error, command)
 
 
 class DiscordTypeError(CommandError):
 	"""Exception raised when a TypeError is detected in a command."""
+
 	def __init__(self, error, command):
 		super().__init__(error, command)
 
 
+class DiscordPermissionError(CommandError):
+	"""Exception raised when a user have not permission to execute a command."""
+
+	def __init__(self, command):
+		super().__init__(None, command)
+
+
 class DiscordEventError(DiscordEasyError):
 	"""Exception raised when a error in a listener is raised."""
+
 	def __init__(self, error, listener):
 		super().__init__(error)
 		self.listener = listener

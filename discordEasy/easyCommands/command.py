@@ -2,7 +2,7 @@ from inspect import isfunction, isroutine, iscoroutine, signature
 
 import discord
 
-from ..errors import CommandError, MissingArgumentsError, DiscordTypeError
+from ..errors import CommandError, MissingArgumentsError, DiscordTypeError, DiscordPermissionError
 from .. import utils
 
 class Command:
@@ -40,3 +40,43 @@ class Command:
 
 		except Exception as e:
 			raise CommandError(e, self)
+
+
+class CommandAdmin(Command):
+	"""Command for admin of guild."""
+	
+	def __init__(self, _function, name: str = None, aliases: list = [], types_options: list = []):
+		super().__init__(_function, name, aliases, types_options)
+
+	async def execute(self, message, *args):
+		if message.author.guild_permissions.administrator:
+			await super().execute(message, *args)
+		else:
+			raise DiscordPermissionError(self)
+
+
+class CommandSuperAdmin(Command):
+	"""Command for creator of bot and user in white list."""
+
+	def __init__(self, bot, _function, name: str = None, aliases: list = [], types_options: list = [], white_list: list = []):
+		super().__init__(_function, name, aliases, types_options)
+		self.bot = bot
+		self.white_list = white_list
+
+	def add_user(self, user_id: int):
+		if isinstance(user_id, int) and user_id not in self.white_list:
+			self.white_list.append(user_id)
+		elif not isinstance(user_id, int):
+			raise ValueError(f"user_id argument must be a integer not {type(user_id)}")
+
+	def remove_user(self, user_id: int):
+		if isinstance(user_id, int) and user_id in self.white_list:
+			self.white_list.remove(user_id)
+		elif not isinstance(user_id, int):
+			raise ValueError(f"user_id argument must be a integer not {type(user_id)}")
+
+	async def execute(self, message, *args):
+		if message.author == self.bot.appInfo.owner or message.author.id in self.white_list:
+			await super().execute(message, *args)
+		else:
+			raise DiscordPermissionError(self)
