@@ -32,6 +32,8 @@ class BaseBot(discord.Client):
 			await self.on_missing_arguments(message.channel)
 		elif isinstance(error, errors.DiscordTypeError):
 			await self.on_type_error(message.channel, error.cmd.types_options)
+		elif isinstance(error, errors.ConditionError):
+			await self.on_condition_error(message.channel)
 		elif isinstance(error.origin, discord.errors.Forbidden):
 			await self.on_permission_error(message)
 		else:
@@ -73,6 +75,14 @@ class BaseBot(discord.Client):
 
 		msg_error = "You have not the permission to do this command."
 		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
+		await channel.send(embed=em_error)
+
+	async def on_condition_error(self, channel):
+		if not isinstance(channel, discord.TextChannel):
+			raise TypeError("channel must be a discord.TextChannel")
+
+		msg_error = "You don't check conditions to execute this command. For more information, use the help command."
+		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=discord.Colour.red())
 		await channel.send(embed=em_error)
 
 
@@ -132,7 +142,7 @@ class Bot(BaseBot):
 			name_command = content.split(self.sep_args)[0]
 			options = [arg.strip() for arg in content.split(self.sep_args)[1:]]
 			for command in self.commands:
-				if command.check_name(name_command):
+				if command.name_isValid(name_command):
 					try:
 						await command.execute(message, *options)
 					except errors.CommandError as e:
@@ -290,6 +300,9 @@ class Bot(BaseBot):
 		elif isinstance(error, errors.DiscordPermissionError):
 			await self.on_permission_error(message.channel)
 
+		elif isinstance(error, errors.ConditionError):
+			await self.on_condition_error(message.channel)
+
 		elif isinstance(error.origin, discord.errors.Forbidden):
 			await self.on_forbidden_error(message)
 
@@ -302,13 +315,13 @@ class Bot(BaseBot):
 			if self.print_traceback:
 				print(traceback_msg)
 
-	def add_command(self, command, types_options: list = [], super_admin: bool = False, white_list: list = []):
+	def add_command(self, command, check=None, types_options: list = [], super_admin: bool = False, white_list: list = []):
 		if isinstance(command, Command):
 			self.commands.append(command)
 		elif inspect.isfunction(command) and not super_admin:
-			self.commands.append(Command(command, command.__name__, types_options=types_options))
+			self.commands.append(Command(command, command.__name__, types_options=types_options, check=check))
 		elif inspect.isfunction(command):
-			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, white_list=white_list))
+			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, check=check, white_list=white_list))
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
@@ -320,24 +333,24 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands_set, super_admin: bool = False, white_list: list = []):
+	def add_commands(self, commands_set, check=None, super_admin: bool = False, white_list: list = []):
 		if isinstance(commands_set, dict):
 			for name, cmd in commands_set.items():
 				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and not super_admin:
-					self.add_command(Command(cmd[0], name=name, types_options=cmd[1]))
+					self.add_command(Command(cmd[0], check=check, name=name, types_options=cmd[1]))
 				elif isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(CommandSuperAdmin(self, cmd[0], name=name, types_options=cmd[1]))
+					self.add_command(CommandSuperAdmin(self, cmd[0], check=check, name=name, types_options=cmd[1]))
 				elif super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd, name=name))
+					self.add_command(CommandSuperAdmin(self, cmd, check=check, name=name))
 				else:
-					self.add_command(Command(cmd, name=name))
+					self.add_command(Command(cmd, check=check, name=name))
 
 		elif isinstance(commands_set, list):
 			for cmd in commands_set:
 				if isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(cmd[0], cmd[1], super_admin=super_admin, white_list=white_list)
+					self.add_command(cmd[0], check=check, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
 				else:
-					self.add_command(cmd, super_admin=super_admin, white_list=white_list)
+					self.add_command(cmd, check=check, super_admin=super_admin, white_list=white_list)
 
 		elif isinstance(commands_set, CommandSet):
 			...

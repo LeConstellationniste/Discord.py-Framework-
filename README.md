@@ -31,20 +31,18 @@ Several features are already implemented such as the lack of arguments in a comm
 ## Installation <a id="installation"></a>
 To install this package, you can use the following commands.
 
-### With `pip`
 
-`pip install git+https://github.com/LeConstellationniste/Discord.py-Framework-.git@main`
+`pip3 install git+https://github.com/LeConstellationniste/Discord.py-Framework-.git@main`
 
 **Don't forget to install [dependencies](#requirements).**
 
 **To update** the package, you can use:  
-`pip install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main --upgrade`
+`pip3 install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main --upgrade`
 
 OR
 
-`pip install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main -U`
+`pip3 install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main -U`
 
-**Note:** If you have several Python version (2 & 3), you must use `pip3` command.
 
 
 [py]: https://www.python.org/

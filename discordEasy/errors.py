@@ -44,6 +44,13 @@ class DiscordPermissionError(CommandError):
 		super().__init__(None, command)
 
 
+class ConditionError(CommandError):
+	"""Exception raised when a user have not check conditions to execute a command."""
+
+	def __init__(self, command):
+		super().__init__(None, command)
+
+
 class DiscordEventError(DiscordEasyError):
 	"""Exception raised when a error in a listener is raised."""
 
