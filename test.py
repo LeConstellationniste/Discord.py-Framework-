@@ -4,6 +4,7 @@ import asyncio
 import discord
 
 from discordEasy.bot import Bot
+from discordEasy.easyCommands import CommandSet, command, listener, command_super_admin
 
 # commands test
 
@@ -50,11 +51,46 @@ async def on_invite_create(invite):
 async def on_bulk_message_delete(messages):
 	await messages[0].channel.send("Un message a été suprimé !")
 
+
+class MyCommandSet(CommandSet):
+	def __init__(self):
+		super().__init__()
+
+	@command(name="soustraction", aliases=['sous'], types_options=[int, int])
+	async def soustraction(self, message, a, b):
+		await message.channel.send(f"`{a} - {b} = {a-b}`")
+
+	@listener()
+	async def on_reaction_add(self, reaction, user):
+		await reaction.message.channel.send('reaction ajouté 2!')
+
+	@command(name='admin', admin=True)
+	async def admin(self, message):
+		await message.channel.send("tu es admin!")
+
+	@command_super_admin(name='superAdmin', aliases=('superA', ), white_list=[508767792124657674])
+	async def super_admin(self, message):
+		await message.channel.send("Tu es super admin!")
+
+@command(name='produit', aliases=('prod', ), types_options=[int, int])
+async def product(message, a, b):
+	await message.channel.send(f"`{a}*{b} = {a*b}`")
+
+def check(message):
+	return True
+
+@command(name="checkTest", aliases=['check'], checks=[check])
+async def check_test(message):
+	await message.channel.send("check is passed")
+
 # Bot
 token = ""
-bot = Bot(">", token, send_errors=True)
+bot = Bot(">", token, send_errors=True, sep_args="$")
 bot.add_command(cmd1)
 bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
 bot.add_listener(on_typing)
 bot.add_listeners([on_invite_create, on_bulk_message_delete, on_member_join, on_member_remove, on_reaction_add, on_reaction_remove, on_guild_channel_update])
+bot.add_command_set(MyCommandSet())
+bot.add_command(product)
+bot.add_command(check_test)
 bot.run()

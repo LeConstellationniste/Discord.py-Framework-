@@ -15,7 +15,7 @@ __license__ = "CC0 1.0 Universal"
 
 setup(
 	name='discordEasy',
-	version='1.20210119',
+	version='1.20210125',
 	author='LostPy & LeConstéllationniste',
 	description="A package to make functional Bot discord very easily and quickly.",
 	long_description=__doc__,
