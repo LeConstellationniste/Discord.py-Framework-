@@ -5,8 +5,8 @@ import datetime
 import discord
 
 from .easyCommands.commandSet import CommandSet
-from .easyCommands.command import Command, CommandSuperAdmin
-from .easyCommands.listener import Listener
+from .easyCommands.commands import Command, CommandSuperAdmin
+from .easyCommands.listeners import Listener
 from . import errors
 from .utils import Logs
 from . import utils
@@ -40,6 +40,11 @@ class BaseBot(discord.Client):
 			print()
 			Logs.error(error.message)
 			print(traceback.format_exc())
+
+	async def on_discord_event_error(self, error):
+		print()
+		Logs.error(error.message)
+		print(traceback.format_exc())
 
 	async def on_missing_arguments(self, channel):
 		if not isinstance(channel, discord.TextChannel):
@@ -96,11 +101,17 @@ class Bot(BaseBot):
 		self.sep_args = sep_args
 		self.commands = []
 		self.listeners = []
+		self.list_set = []
 
 	async def check_execute_listener(self, event_name: str, *args, **kwargs):
-		for listener in self.listeners:
-			if listener.event_name == event_name:
-				await listener.execute(*args, **kwargs)
+		try:
+			for listener in self.listeners:
+				if listener.event_name == event_name:
+					await listener.execute(*args, **kwargs)
+			for cmd_set in self.list_set:
+				await cmd_set.execute_listener(event_name, *args, **kwargs)
+		except errors.DiscordEventError as e:
+			self.on_discord_event_error(e)
 
 	async def on_ready(self):  # ok
 		await super().on_ready()
@@ -139,18 +150,20 @@ class Bot(BaseBot):
 	async def on_message(self, message):  # ok
 		if not message.author.bot and message.content.startswith(self.prefix):
 			content = message.content[len(self.prefix):]
-			name_command = content.split(self.sep_args)[0]
-			options = [arg.strip() for arg in content.split(self.sep_args)[1:]]
-			for command in self.commands:
-				if command.name_isValid(name_command):
-					try:
+			name_command = content.split(" ")[0]
+			content = content[len(name_command)+1:]
+			options = [arg.strip() for arg in content.split(self.sep_args)]
+			try:
+				for command in self.commands:
+					if command.name_isValid(name_command):
 						await command.execute(message, *options)
-					except errors.CommandError as e:
-						try:
-							await self.on_command_error(e, message)
-						except Exception as e:
-							await self.on_command_error(errors.CommandError(e, command), message)
-
+				for cmd_set in self.list_set:
+					await cmd_set.execute_cmd(message, name_command, options)
+			except errors.CommandError as e:
+				try:
+					await self.on_command_error(e, message)
+				except Exception as e:
+					await self.on_command_error(errors.CommandError(e, command), message)
 		else:
 			await self.check_execute_listener('on_message', message)
 
@@ -315,59 +328,68 @@ class Bot(BaseBot):
 			if self.print_traceback:
 				print(traceback_msg)
 
-	def add_command(self, command, check=None, types_options: list = [], super_admin: bool = False, white_list: list = []):
+	async def on_discord_event_error(self, error):
+		print()
+		Logs.error(error.message)
+		traceback_msg = traceback.format_exc()
+		if self.send_errors:
+			await self.send_error_to_owner(error, traceback_msg, error.listener._fct.__name__)
+		if self.print_traceback:
+			print(traceback_msg)
+
+	def add_command(self, command, checks: list = [], types_options: list = [], super_admin: bool = False, white_list: list = []):
 		if isinstance(command, Command):
 			self.commands.append(command)
 		elif inspect.isfunction(command) and not super_admin:
-			self.commands.append(Command(command, command.__name__, types_options=types_options, check=check))
+			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
 		elif inspect.isfunction(command):
-			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, check=check, white_list=white_list))
+			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, checks=checks, white_list=white_list))
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
-	def add_listener(self, listener, event_name: str = None):
+	def add_listener(self, listener, event_name: str = None, checks: list = []):
 		if isinstance(listener, Listener):
 			self.listeners.append(listener)
 		elif inspect.isroutine(listener):
-			self.listeners.append(Listener(listener, event_name))
+			self.listeners.append(Listener(listener, event_name, checks=checks))
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands_set, check=None, super_admin: bool = False, white_list: list = []):
+	def add_commands(self, commands_set, checks: list = [], super_admin: bool = False, white_list: list = []):
 		if isinstance(commands_set, dict):
 			for name, cmd in commands_set.items():
 				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and not super_admin:
-					self.add_command(Command(cmd[0], check=check, name=name, types_options=cmd[1]))
+					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(CommandSuperAdmin(self, cmd[0], check=check, name=name, types_options=cmd[1]))
+					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd, check=check, name=name))
+					self.add_command(CommandSuperAdmin(self, cmd, checks=checks, name=name))
 				else:
-					self.add_command(Command(cmd, check=check, name=name))
+					self.add_command(Command(cmd, checks=checks, name=name))
 
 		elif isinstance(commands_set, list):
 			for cmd in commands_set:
 				if isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(cmd[0], check=check, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
+					self.add_command(cmd[0], checks=checks, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
 				else:
-					self.add_command(cmd, check=check, super_admin=super_admin, white_list=white_list)
-
-		elif isinstance(commands_set, CommandSet):
-			...
-			raise ValueError("You can't already use a CommandSet with this method, it's in progress")
+					self.add_command(cmd, checks=checks, super_admin=super_admin, white_list=white_list)
 
 		else:
 			raise ValueError(f"commands_set must be a CommandSet, a dict or a list, not {type(command)}")
 
-	def add_listeners(self, listeners):
+	def add_listeners(self, listeners, checks: list = []):
 		if isinstance(listeners, dict):
 			for event_name, listener in listeners.items():
-				self.add_listener(listener, event_name=event_name)
+				self.add_listener(listener, event_name=event_name, checks=checks)
 		elif isinstance(listeners, list) or isinstance(listeners, tuple):
 			for listener in listeners:
-				self.add_listener(listener)
+				self.add_listener(listener, checks=checks)
+
+	def add_command_set(self, command_set: CommandSet):
+		if isinstance(command_set, CommandSet):
+			self.list_set.append(command_set)
+		else:
+			raise ValueError(f"command_set must be a instance of CommandSet, not a {type(command_set)}")
 
 	def run(self):
 		super().run(self.token)
-
-
