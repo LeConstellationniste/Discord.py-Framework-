@@ -1,6 +1,10 @@
 # DiscordEasy
-A package to make functional Bot discord very easily and quickly.
-Several features are already implemented such as the lack of arguments in a command and the lack of permissions.
+
+
+<img align="left" width="100" height="100" src="https://www.python.org/static/img/python-logo-large.c36dccadd999.png"> <img align="right" width="100" height="100" src="https://github.com/LeConstellationniste/Discord.py-Framework-/blob/master/im/discord_logo.png">  
+
+DiscordEasy is a package to make functional Bot discord very easily and quickly. Several features are already implemented such as the lack of arguments in a command and the lack of permissions, many errors in a command are already handled.  
+In addition, you can choose a custom prefix, a custom separator arguments...  
 
 ## Global Information
 
