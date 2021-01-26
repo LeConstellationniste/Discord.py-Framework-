@@ -21,41 +21,56 @@ class Logs:
 		color_success = Fore.GREEN
 
 	@staticmethod
-	def info(msg: str):
+	def info(msg: str, path_save: str = None):
 		msg_log = f"[{datetime_log()}][INFO] {msg}"
 		if colorama_imported:
 			print(Logs.color_info + msg_log + Fore.RESET)
 		else:
 			print(msg_log)
+		if path_save is not None:
+			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
-	def debug(msg: str):
+	def debug(msg: str, path_save: str = None):
 		msg_log = f"[{datetime_log()}][DEBUG] {msg}"
 		if colorama_imported:
 			print(Logs.color_debug + msg_log + Fore.RESET)
 		else:
 			print(msg_log)
+		if path_save is not None:
+			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
-	def error(msg: str):
+	def error(msg: str, path_save: str = None):
 		msg_log = f"[{datetime_log()}][ERROR] {msg}"
 		if colorama_imported:
 			print(Logs.color_error + msg_log + Fore.RESET)
 		else:
 			print(msg_log)
+		if path_save is not None:
+			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
-	def warning(msg: str):
+	def warning(msg: str, path_save: str = None):
 		msg_log = f"[{datetime_log()}][WARNING] {msg}"
 		if colorama_imported:
 			print(Logs.color_warning + msg_log + Fore.RESET)
 		else:
 			print(msg_log)
+		if path_save is not None:
+			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
-	def success(msg: str):
+	def success(msg: str, path_save: str = None):
 		msg_log = f"[{datetime_log()}][SUCCESS] {msg}"
 		if colorama_imported:
 			print(Logs.color_success + msg_log + Fore.RESET)
 		else:
 			print(msg_log)
+		if path_save is not None:
+			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
