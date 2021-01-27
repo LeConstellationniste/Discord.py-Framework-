@@ -5,7 +5,7 @@ import datetime
 import discord
 
 from .easyCommands.commandSet import CommandSet
-from .easyCommands.commands import Command, CommandSuperAdmin
+from .easyCommands.commands import Command, CommandAdmin, CommandSuperAdmin
 from .easyCommands.listeners import Listener
 from . import errors
 from .utils import Logs
@@ -20,11 +20,11 @@ class BaseBot(discord.Client):
 		self.prefix = prefix
 		self.token = token
 		self.avatar_url = None  # avatar url of bot, initialized in 'on_ready' event
-		self.appInfo = None  # AppInfo instance initialized in 'on_ready' event
+		self.app_info = None  # AppInfo instance initialized in 'on_ready' event
 
 	async def on_ready(self):
 		self.avatar_url = self.user.avatar_url
-		self.appInfo = await self.application_info()
+		self.app_info = await self.application_info()
 
 	async def on_command_error(self, error, message):
 
@@ -300,7 +300,7 @@ class Bot(BaseBot):
 		em = discord.Embed(title="Error raised", colour=discord.Colour.red())
 		em.description = f"A error {type(error)} was raised in {where}:\n```{traceback_msg}```"
 		em.timestamp = datetime.datetime.utcnow()
-		await self.appInfo.owner.send(embed=em)
+		await self.app_info.owner.send(embed=em)
 
 	async def on_command_error(self, error, message):
 
@@ -337,13 +337,15 @@ class Bot(BaseBot):
 		if self.print_traceback:
 			print(traceback_msg)
 
-	def add_command(self, command, checks: list = [], types_options: list = [], super_admin: bool = False, white_list: list = []):
+	def add_command(self, command, checks: list = [], types_options: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
 		if isinstance(command, Command):
 			self.commands.append(command)
-		elif inspect.isfunction(command) and not super_admin:
-			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
-		elif inspect.isfunction(command):
+		elif inspect.isfunction(command) and super_admin:
 			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, checks=checks, white_list=white_list))
+		elif inspect.isfunction(command) and admin:
+			self.commands.append(CommandAdmin(command, command.__name__, types_options=types_options, checks=checks))
+		elif inspect.isfunction(command):
+			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
@@ -355,15 +357,19 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands_set, checks: list = [], super_admin: bool = False, white_list: list = []):
+	def add_commands(self, commands_set, checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
 		if isinstance(commands_set, dict):
 			for name, cmd in commands_set.items():
-				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and not super_admin:
-					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
+				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and super_admin:
+					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1], white_list=white_list))
+				elif (isinstance(cmd, tuple) or isinstance(cmd, list)) and admin:
+					self.add_command(CommandAdmin(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1]))
+					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd, checks=checks, name=name))
+					self.add_command(CommandSuperAdmin(self, cmd, checks=checks, name=name, white_list=white_list))
+				elif admin:
+					self.add_command(CommandAdmin(cmd, checks=checks, name=name))
 				else:
 					self.add_command(Command(cmd, checks=checks, name=name))
 
