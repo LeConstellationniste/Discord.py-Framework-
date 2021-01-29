@@ -2,3 +2,4 @@
 
 from . import easyCommands
 from . import utils
+from .bot import Bot

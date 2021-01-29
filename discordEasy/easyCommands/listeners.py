@@ -35,7 +35,7 @@ class Listener:
 				raise DiscordEventError(e, self)
 
 
-# Decorators for easy construction of listeners
+# Decorator for easy construction of listeners
 
 def listener(event_name: str = None, checks: list = []):
 	def decorator(_fct):

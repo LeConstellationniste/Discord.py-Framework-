@@ -90,6 +90,9 @@ class BaseBot(discord.Client):
 		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=discord.Colour.red())
 		await channel.send(embed=em_error)
 
+	def run(self):
+		super().run(self.token)
+
 
 class Bot(BaseBot):
 	"""Class Bot to build easier and quickly Discord bot."""
@@ -123,26 +126,14 @@ class Bot(BaseBot):
 		print(sep)
 		await self.check_execute_listener('on_ready')
 
-	async def on_shard_ready(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_ready', shard_id)
-
 	async def on_connect(self):  # ok
 		await self.check_execute_listener('on_connect')
-
-	async def on_shard_connect(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_connect', shard_id)
 
 	async def on_disconnect(self):  # ok
 		await self.check_execute_listener('on_disconnect')
 
-	async def on_shard_disconnect(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_disconnect', shard_id)
-
 	async def on_resumed(self):
 		await self.check_execute_listener('on_resumed')
-
-	async def on_shard_resumed(self, shard_id):
-		await self.check_execute_listener('on_shard_resumed', shard_id)
 
 	async def on_typing(self, channel, user, when):  # fonctionne pas
 		await self.check_execute_listener('on_typing', channel, user, when)
@@ -173,41 +164,20 @@ class Bot(BaseBot):
 	async def on_bulk_message_delete(self, messages):  # ne fonctionne pas
 		await self.check_execute_listener('on_bulk_message_delete', messages)
 
-	async def on_raw_message_delete(self, payload):  # ok
-		await self.check_execute_listener('on_raw_message_delete', payload)
-
-	async def on_raw_bulk_message_delete(self, payload):  # ne fonctionne pas
-		await self.check_execute_listener('on_raw_bulk_message_delete', payload)
-
 	async def on_message_edit(self, before, after):  # ok
 		await self.check_execute_listener('on_message_edit', before, after)
-
-	async def on_raw_message_edit(self, payload):  # ok
-		await self.check_execute_listener('on_raw_message_edit', payload)
 
 	async def on_reaction_add(self, reaction, user):  # ok
 		await self.check_execute_listener('on_reaction_add', reaction, user)
 
-	async def on_raw_reaction_add(self, payload):  # ok
-		await self.check_execute_listener('on_raw_reaction_add', payload)
-
 	async def on_reaction_remove(self, reaction, user):  # fonctionne pas
 		await self.check_execute_listener('on_reaction_remove', reaction, user)
-
-	async def on_raw_reaction_remove(self, payload):  # fonctionne pas
-		await self.check_execute_listener('on_raw_reaction_remove', payload)
 
 	async def on_reaction_clear(self, message, reaction):
 		await self.check_execute_listener('on_reaction_clear', message, reaction)
 
-	async def on_raw_reaction_clear(self, payload):
-		await self.check_execute_listener('on_raw_reaction_clear', payload)
-
 	async def on_reaction_clear_emoji(self, reaction):
 		await self.check_execute_listener('on_reaction_clear_emoji', reaction)
-
-	async def on_raw_reaction_clear_emoji(self, payload):
-		await self.check_execute_listener('on_raw_reaction_clear_emoji', payload)
 
 	async def on_private_channel_delete(self, channel):
 		await self.check_execute_listener('on_private_channel_delete', channel)
@@ -357,9 +327,9 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands_set, checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
-		if isinstance(commands_set, dict):
-			for name, cmd in commands_set.items():
+	def add_commands(self, commands, checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
+		if isinstance(commands, dict):
+			for name, cmd in commands.items():
 				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and super_admin:
 					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1], white_list=white_list))
 				elif (isinstance(cmd, tuple) or isinstance(cmd, list)) and admin:
@@ -373,8 +343,8 @@ class Bot(BaseBot):
 				else:
 					self.add_command(Command(cmd, checks=checks, name=name))
 
-		elif isinstance(commands_set, list):
-			for cmd in commands_set:
+		elif isinstance(commands, list):
+			for cmd in commands:
 				if isinstance(cmd, tuple) or isinstance(cmd, list):
 					self.add_command(cmd[0], checks=checks, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
 				else:
@@ -396,6 +366,3 @@ class Bot(BaseBot):
 			self.list_set.append(command_set)
 		else:
 			raise ValueError(f"command_set must be a instance of CommandSet, not a {type(command_set)}")
-
-	def run(self):
-		super().run(self.token)
