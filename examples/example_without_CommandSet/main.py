@@ -8,7 +8,7 @@ from my_commands import *
 from my_listeners import *
 
 
-my_token_bot = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.F_JrTc9EwOkrV5ew1qPYvlk3ey8"
+my_token_bot = ""
 my_prefix_bot = ">"
 
 
