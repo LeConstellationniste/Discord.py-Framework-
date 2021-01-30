@@ -6,12 +6,13 @@ except ImportError:
 	colorama_imported = False
 
 
-def datetime_log() -> str:
+def datetime_log(date_format: str = "%Y-%m-%d to %H:%M:%S") -> str:
 	current_datetime = datetime.now()
-	return current_datetime.strftime("%Y-%m-%d to %H:%M:%S")
+	return current_datetime.strftime(date_format)
 
 
 class Logs:
+	date_fmt = "%Y-%m-%d to %H:%M:%S"
 	if colorama_imported:
 		init()  # init colorama for Window
 		color_debug = Fore.CYAN

@@ -4,9 +4,9 @@ import datetime
 
 import discord
 
-from .easyCommands.commandSet import CommandSet
-from .easyCommands.commands import Command, CommandAdmin, CommandSuperAdmin
-from .easyCommands.listeners import Listener
+from .objects.commandSet import CommandSet
+from .objects.commands import Command, CommandAdmin, CommandSuperAdmin
+from .objects.listeners import Listener
 from . import errors
 from .utils import Logs
 from . import utils
@@ -337,7 +337,7 @@ class Bot(BaseBot):
 				elif isinstance(cmd, tuple) or isinstance(cmd, list):
 					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd, checks=checks, name=name, white_list=white_list))
+					self.add_command(CommandSuperAdmin(cmd, checks=checks, name=name, white_list=white_list))
 				elif admin:
 					self.add_command(CommandAdmin(cmd, checks=checks, name=name))
 				else:
@@ -350,8 +350,11 @@ class Bot(BaseBot):
 				else:
 					self.add_command(cmd, checks=checks, super_admin=super_admin, white_list=white_list)
 
+		elif isinstance(commands, CommandSet):
+			self.list_set.append(commands)
+
 		else:
-			raise ValueError(f"commands_set must be a CommandSet, a dict or a list, not {type(command)}")
+			raise ValueError(f"commands must be a CommandSet, a dict or a list, not {type(command)}")
 
 	def add_listeners(self, listeners, checks: list = []):
 		if isinstance(listeners, dict):
@@ -360,9 +363,3 @@ class Bot(BaseBot):
 		elif isinstance(listeners, list) or isinstance(listeners, tuple):
 			for listener in listeners:
 				self.add_listener(listener, checks=checks)
-
-	def add_command_set(self, command_set: CommandSet):
-		if isinstance(command_set, CommandSet):
-			self.list_set.append(command_set)
-		else:
-			raise ValueError(f"command_set must be a instance of CommandSet, not a {type(command_set)}")

@@ -4,7 +4,7 @@ import asyncio
 import discord
 
 from discordEasy.bot import Bot
-from discordEasy.easyCommands import CommandSet, command, listener, command_super_admin
+from discordEasy.objects import CommandSet, command, listener, command_super_admin
 
 # commands test
 
