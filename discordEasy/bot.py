@@ -4,9 +4,9 @@ import datetime
 
 import discord
 
-from .easyCommands.commandSet import CommandSet
-from .easyCommands.commands import Command, CommandSuperAdmin
-from .easyCommands.listeners import Listener
+from .objects.commandSet import CommandSet
+from .objects.commands import Command, CommandAdmin, CommandSuperAdmin
+from .objects.listeners import Listener
 from . import errors
 from .utils import Logs
 from . import utils
@@ -20,11 +20,11 @@ class BaseBot(discord.Client):
 		self.prefix = prefix
 		self.token = token
 		self.avatar_url = None  # avatar url of bot, initialized in 'on_ready' event
-		self.appInfo = None  # AppInfo instance initialized in 'on_ready' event
+		self.app_info = None  # AppInfo instance initialized in 'on_ready' event
 
 	async def on_ready(self):
 		self.avatar_url = self.user.avatar_url
-		self.appInfo = await self.application_info()
+		self.app_info = await self.application_info()
 
 	async def on_command_error(self, error, message):
 
@@ -90,6 +90,9 @@ class BaseBot(discord.Client):
 		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=discord.Colour.red())
 		await channel.send(embed=em_error)
 
+	def run(self):
+		super().run(self.token)
+
 
 class Bot(BaseBot):
 	"""Class Bot to build easier and quickly Discord bot."""
@@ -123,26 +126,14 @@ class Bot(BaseBot):
 		print(sep)
 		await self.check_execute_listener('on_ready')
 
-	async def on_shard_ready(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_ready', shard_id)
-
 	async def on_connect(self):  # ok
 		await self.check_execute_listener('on_connect')
-
-	async def on_shard_connect(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_connect', shard_id)
 
 	async def on_disconnect(self):  # ok
 		await self.check_execute_listener('on_disconnect')
 
-	async def on_shard_disconnect(self, shard_id):  # ok
-		await self.check_execute_listener('on_shard_disconnect', shard_id)
-
 	async def on_resumed(self):
 		await self.check_execute_listener('on_resumed')
-
-	async def on_shard_resumed(self, shard_id):
-		await self.check_execute_listener('on_shard_resumed', shard_id)
 
 	async def on_typing(self, channel, user, when):  # fonctionne pas
 		await self.check_execute_listener('on_typing', channel, user, when)
@@ -173,41 +164,20 @@ class Bot(BaseBot):
 	async def on_bulk_message_delete(self, messages):  # ne fonctionne pas
 		await self.check_execute_listener('on_bulk_message_delete', messages)
 
-	async def on_raw_message_delete(self, payload):  # ok
-		await self.check_execute_listener('on_raw_message_delete', payload)
-
-	async def on_raw_bulk_message_delete(self, payload):  # ne fonctionne pas
-		await self.check_execute_listener('on_raw_bulk_message_delete', payload)
-
 	async def on_message_edit(self, before, after):  # ok
 		await self.check_execute_listener('on_message_edit', before, after)
-
-	async def on_raw_message_edit(self, payload):  # ok
-		await self.check_execute_listener('on_raw_message_edit', payload)
 
 	async def on_reaction_add(self, reaction, user):  # ok
 		await self.check_execute_listener('on_reaction_add', reaction, user)
 
-	async def on_raw_reaction_add(self, payload):  # ok
-		await self.check_execute_listener('on_raw_reaction_add', payload)
-
 	async def on_reaction_remove(self, reaction, user):  # fonctionne pas
 		await self.check_execute_listener('on_reaction_remove', reaction, user)
-
-	async def on_raw_reaction_remove(self, payload):  # fonctionne pas
-		await self.check_execute_listener('on_raw_reaction_remove', payload)
 
 	async def on_reaction_clear(self, message, reaction):
 		await self.check_execute_listener('on_reaction_clear', message, reaction)
 
-	async def on_raw_reaction_clear(self, payload):
-		await self.check_execute_listener('on_raw_reaction_clear', payload)
-
 	async def on_reaction_clear_emoji(self, reaction):
 		await self.check_execute_listener('on_reaction_clear_emoji', reaction)
-
-	async def on_raw_reaction_clear_emoji(self, payload):
-		await self.check_execute_listener('on_raw_reaction_clear_emoji', payload)
 
 	async def on_private_channel_delete(self, channel):
 		await self.check_execute_listener('on_private_channel_delete', channel)
@@ -300,7 +270,7 @@ class Bot(BaseBot):
 		em = discord.Embed(title="Error raised", colour=discord.Colour.red())
 		em.description = f"A error {type(error)} was raised in {where}:\n```{traceback_msg}```"
 		em.timestamp = datetime.datetime.utcnow()
-		await self.appInfo.owner.send(embed=em)
+		await self.app_info.owner.send(embed=em)
 
 	async def on_command_error(self, error, message):
 
@@ -337,13 +307,15 @@ class Bot(BaseBot):
 		if self.print_traceback:
 			print(traceback_msg)
 
-	def add_command(self, command, checks: list = [], types_options: list = [], super_admin: bool = False, white_list: list = []):
+	def add_command(self, command, checks: list = [], types_options: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
 		if isinstance(command, Command):
 			self.commands.append(command)
-		elif inspect.isfunction(command) and not super_admin:
-			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
-		elif inspect.isfunction(command):
+		elif inspect.isfunction(command) and super_admin:
 			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, checks=checks, white_list=white_list))
+		elif inspect.isfunction(command) and admin:
+			self.commands.append(CommandAdmin(command, command.__name__, types_options=types_options, checks=checks))
+		elif inspect.isfunction(command):
+			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
@@ -355,27 +327,34 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands_set, checks: list = [], super_admin: bool = False, white_list: list = []):
-		if isinstance(commands_set, dict):
-			for name, cmd in commands_set.items():
-				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and not super_admin:
-					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
+	def add_commands(self, commands, checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
+		if isinstance(commands, dict):
+			for name, cmd in commands.items():
+				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and super_admin:
+					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1], white_list=white_list))
+				elif (isinstance(cmd, tuple) or isinstance(cmd, list)) and admin:
+					self.add_command(CommandAdmin(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1]))
+					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
 				elif super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd, checks=checks, name=name))
+					self.add_command(CommandSuperAdmin(cmd, checks=checks, name=name, white_list=white_list))
+				elif admin:
+					self.add_command(CommandAdmin(cmd, checks=checks, name=name))
 				else:
 					self.add_command(Command(cmd, checks=checks, name=name))
 
-		elif isinstance(commands_set, list):
-			for cmd in commands_set:
+		elif isinstance(commands, list):
+			for cmd in commands:
 				if isinstance(cmd, tuple) or isinstance(cmd, list):
 					self.add_command(cmd[0], checks=checks, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
 				else:
 					self.add_command(cmd, checks=checks, super_admin=super_admin, white_list=white_list)
 
+		elif isinstance(commands, CommandSet):
+			self.list_set.append(commands)
+
 		else:
-			raise ValueError(f"commands_set must be a CommandSet, a dict or a list, not {type(command)}")
+			raise ValueError(f"commands must be a CommandSet, a dict or a list, not {type(command)}")
 
 	def add_listeners(self, listeners, checks: list = []):
 		if isinstance(listeners, dict):
@@ -384,12 +363,3 @@ class Bot(BaseBot):
 		elif isinstance(listeners, list) or isinstance(listeners, tuple):
 			for listener in listeners:
 				self.add_listener(listener, checks=checks)
-
-	def add_command_set(self, command_set: CommandSet):
-		if isinstance(command_set, CommandSet):
-			self.list_set.append(command_set)
-		else:
-			raise ValueError(f"command_set must be a instance of CommandSet, not a {type(command_set)}")
-
-	def run(self):
-		super().run(self.token)

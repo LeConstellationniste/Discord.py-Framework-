@@ -8,11 +8,11 @@ from ..errors import DiscordEventError
 
 # class Listerner
 class Listener:
-	def __init__(self, _routine, event_name: str = None, checks: list = []):
-		if isroutine(_routine):
-			self._fct = _routine
+	def __init__(self, _fct, event_name: str = None, checks: list = []):
+		if isroutine(_fct):
+			self._fct = _fct
 		else:
-			raise ValueError(f"_routine must be a routine, not a {type(_routine)}")
+			raise ValueError(f"_routine must be a routine, not a {type(_fct)}")
 		self.event_name = self._fct.__name__ if event_name is None else event_name
 
 		for check in checks:
@@ -35,7 +35,7 @@ class Listener:
 				raise DiscordEventError(e, self)
 
 
-# Decorators for easy construction of listeners
+# Decorator for easy construction of listeners
 
 def listener(event_name: str = None, checks: list = []):
 	def decorator(_fct):

@@ -84,8 +84,8 @@ class CommandAdmin(Command):
 			raise errors.DiscordPermissionError(self)
 
 
-class CommandSuperAdmin(Command):
-	"""Command for creator of bot and user in white list."""
+class CommandSuperAdmin(CommandAdmin):
+	"""Command for creator of bot and user in white list. User must be also a administrator."""
 
 	def __init__(self, _function, name: str = None, aliases: list = [], types_options: list = [], checks: list = [], white_list: list = []):
 		super().__init__(_function, name, aliases, types_options, checks)
@@ -110,17 +110,13 @@ class CommandSuperAdmin(Command):
 			raise errors.DiscordPermissionError(self)
 
 
-# Decorators for easy construction of command
+# Decorator for easy construction of command
 
-def command(name: str = None, aliases: list = [], types_options: list = [], checks: list = [], admin: bool = False):
+def command(name: str = None, aliases: list = [], types_options: list = [], checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
 	def decorator(_fct):
-		if admin:
+		if super_admin:
+			return CommandSuperAdmin(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks, white_list=white_list)
+		elif admin:
 			return CommandAdmin(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks)
 		return Command(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks)
-	return decorator
-
-
-def command_super_admin(name: str = None, aliases: list = [], types_options: list = [], checks: list = [], white_list: list = []):
-	def decorator(_fct):
-		return CommandSuperAdmin(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks, white_list=white_list)
 	return decorator

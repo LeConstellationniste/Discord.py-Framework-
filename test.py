@@ -4,7 +4,7 @@ import asyncio
 import discord
 
 from discordEasy.bot import Bot
-from discordEasy.easyCommands import CommandSet, command, listener, command_super_admin
+from discordEasy.objects import CommandSet, command, listener, command_super_admin
 
 # commands test
 
@@ -68,7 +68,7 @@ class MyCommandSet(CommandSet):
 	async def admin(self, message):
 		await message.channel.send("tu es admin!")
 
-	@command_super_admin(name='superAdmin', aliases=('superA', ), white_list=[508767792124657674])
+	@command(name='superAdmin', aliases=('superA', ), super_admin=True, white_list=[508767792124657674])
 	async def super_admin(self, message):
 		await message.channel.send("Tu es super admin!")
 
