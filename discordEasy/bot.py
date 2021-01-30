@@ -142,8 +142,9 @@ class Bot(BaseBot):
 		if not message.author.bot and message.content.startswith(self.prefix):
 			content = message.content[len(self.prefix):]
 			name_command = content.split(" ")[0]
-			content = content[len(name_command)+1:]
-			options = [arg.strip() for arg in content.split(self.sep_args)]
+			content = content[len(name_command)+2:]
+			options = [arg.strip() for arg in content.split(self.sep_args) if len(arg.strip()) > 0]
+
 			try:
 				for command in self.commands:
 					if command.name_isValid(name_command):

@@ -2,7 +2,7 @@
 Example without OOP.
 """
 
-from discordEasy import bot
+from discordEasy import Bot
 
 from my_commands import *
 from my_listeners import *
