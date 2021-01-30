@@ -4,7 +4,7 @@ Example with OOP.
 This script is the main Python script of your bot, here, the bot is initialized.
 """
 
-from discordEasy import bot
+from discordEasy import Bot
 
 from help import Help
 from math_commands import Math
