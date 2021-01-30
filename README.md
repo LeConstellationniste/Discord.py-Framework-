@@ -41,11 +41,11 @@ To install this package, you can use the following commands.
 **Don't forget to install [dependencies](#requirements).**
 
 **To update** the package, you can use:  
-`pip3 install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main --upgrade`
+`pip3 install git+https://github.com/LeConstellationniste/Discord.py-Framework-.git@main --upgrade`
 
 OR
 
-`pip3 install https://github.com/LeConstellationniste/Discord.py-Framework-.git@main -U`
+`pip3 install git+https://github.com/LeConstellationniste/Discord.py-Framework-.git@main -U`
 
 
 
