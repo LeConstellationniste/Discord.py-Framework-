@@ -4,7 +4,7 @@ import asyncio
 import discord
 
 from discordEasy.bot import Bot
-from discordEasy.objects import CommandSet, command, listener, command_super_admin
+from discordEasy.objects import CommandSet, command, listener
 
 # commands test
 
@@ -90,7 +90,7 @@ bot.add_command(cmd1)
 bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
 bot.add_listener(on_typing)
 bot.add_listeners([on_invite_create, on_bulk_message_delete, on_member_join, on_member_remove, on_reaction_add, on_reaction_remove, on_guild_channel_update])
-bot.add_command_set(MyCommandSet())
+bot.add_commands(MyCommandSet())
 bot.add_command(product)
 bot.add_command(check_test)
 bot.run()
