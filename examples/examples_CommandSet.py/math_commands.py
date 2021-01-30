@@ -18,11 +18,11 @@ class Math(CommandSet):
 	async def subtraction(self, message, a, b):
 		await message.channel.send(f"`{a} - {b} = {a - b}`", reference=message, mention_author=False)
 
-	@command(name="Product", aliases("product", "Prod", "prod"), types_options=[float, float])
+	@command(name="Product", aliases=("product", "Prod", "prod"), types_options=[float, float])
 	async def product(self, message, a, b):
 		await message.channel.send(f"`{a}*{b} = {a*b}`", reference=message, mention_author=False)
 
-	@command(name="Divide", aliases=("divide", "Div", "div"))
+	@command(name="Divide", aliases=("divide", "Div", "div"), types_options=[float, float])
 	async def divide(self, message, a, b):
 		if b == 0:
 			em_error = discord.Embed(title="DivideByZero Error", color=discord.Colour.red())

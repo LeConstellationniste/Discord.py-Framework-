@@ -13,7 +13,7 @@ class Help(CommandSet):
 	@command(name='Help', aliases=("help", "H", "h"))
 	async def help(self, message):
 		help_embed = discord.Embed(title="Help", color=discord.Colour.blue())
-		help_embed.description = f"{self.bot.app_info.name} is a test bot.\n\nPrefix of the bot: `{self.bot.prefix}`\n\nIf a command requires options, you must separate the options by: `{self.bot.setp_args}`.\n\n"
+		help_embed.description = f"""{self.bot.app_info.name} is a test bot.\n\nPrefix of the bot: `"{self.bot.prefix}"`\n\nIf a command requires options, you must separate the options by: `"{self.bot.sep_args}"`.\n\n"""
 		help_math = f"""Commands Math:
 		* `Addition`: Addition of 2 numbers `a` & `b`. Example: `{self.bot.prefix}Addition 1{self.bot.sep_args}1`. Aliases: `addition`, `Add`, `add`.
 		* `Subtraction`: Subtraction of 2 numbers `a` & `b`. Example: `{self.bot.prefix}Subtraction 1{self.bot.sep_args}1`. Aliases: `substraction`, `Sub`, `sub`.

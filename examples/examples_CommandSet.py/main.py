@@ -10,7 +10,7 @@ from help import Help
 from math_commands import Math
 
 
-my_token_bot = "YourToken"
+my_token_bot = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.F_JrTc9EwOkrV5ew1qPYvlk3ey8"
 my_prefix_bot = ">"
 
 # The arguments 'print_traceback', 'send_errors' and 'sep_args' have by default the same values as below, they have been explained just for the example.
