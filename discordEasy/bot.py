@@ -135,7 +135,7 @@ class Bot(BaseBot):
 	async def on_resumed(self):
 		await self.check_execute_listener('on_resumed')
 
-	async def on_typing(self, channel, user, when):  # fonctionne pas
+	async def on_typing(self, channel, user, when):  # fonctionne qu'en mp
 		await self.check_execute_listener('on_typing', channel, user, when)
 
 	async def on_message(self, message):  # ok
