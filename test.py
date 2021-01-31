@@ -84,7 +84,7 @@ async def check_test(message):
 	await message.channel.send("check is passed")
 
 # Bot
-token = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.U2uvNtUEyNWKHu5N3fyoUVsyc_o"
+token = ""
 bot = Bot(">", token, send_errors=True, sep_args="$")
 bot.add_command(cmd1)
 bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
