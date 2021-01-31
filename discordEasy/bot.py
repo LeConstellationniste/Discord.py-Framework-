@@ -15,10 +15,11 @@ from . import utils
 class BaseBot(discord.Client):
 	"""A base class for Bot."""
 
-	def __init__(self, prefix, token):
+	def __init__(self, prefix: str, token: str, description: str = ""):
 		super().__init__()
 		self.prefix = prefix
 		self.token = token
+		self.description = description
 		self.avatar_url = None  # avatar url of bot, initialized in 'on_ready' event
 		self.app_info = None  # AppInfo instance initialized in 'on_ready' event
 
@@ -50,9 +51,9 @@ class BaseBot(discord.Client):
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 
-		msg_error = "Missing options to execute this command."
+		msg_error = "Missing options to execute this command. Use the help command for more informations."
 		embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
-		await channel.send(embed=embed_error)
+		await channel.send(embed=embed_error, delete_after=10)
 
 	async def on_type_error(self, channel, types: list):
 		if not isinstance(channel, discord.TextChannel):
@@ -60,7 +61,7 @@ class BaseBot(discord.Client):
 
 		msg_error = "One or several options have a bad type. The type of options must be, in order: " + utils.replace_multiple(str(types), ['class', '[', ']', '>', '<']).replace("'", "`")
 		embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
-		await channel.send(embed=embed_error)
+		await channel.send(embed=embed_error, delete_after=10)
 
 	async def on_forbidden_error(self, message):
 		if not isinstance(message, discord.Message):
@@ -69,10 +70,10 @@ class BaseBot(discord.Client):
 		msg_error = "Missing permission to do this command."
 		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
 		try:
-			await message.channel.send(embed=em_error)
+			await message.channel.send(embed=em_error, delete_after=10)
 		except discord.errors.Forbidden:
 			em_error.description = f"Missing permission to send message in {message.channel.mention}."
-			await message.author.send(embed=em_error)
+			await message.author.send(embed=em_error, delete_after=10)
 
 	async def on_permission_error(self, channel):
 		if not isinstance(channel, discord.TextChannel):
@@ -80,7 +81,7 @@ class BaseBot(discord.Client):
 
 		msg_error = "You have not the permission to do this command."
 		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
-		await channel.send(embed=em_error)
+		await channel.send(embed=em_error, delete_after=10)
 
 	async def on_condition_error(self, channel):
 		if not isinstance(channel, discord.TextChannel):
@@ -88,7 +89,7 @@ class BaseBot(discord.Client):
 
 		msg_error = "You don't check conditions to execute this command. For more information, use the help command."
 		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=discord.Colour.red())
-		await channel.send(embed=em_error)
+		await channel.send(embed=em_error, delete_after=10)
 
 	def run(self):
 		super().run(self.token)
