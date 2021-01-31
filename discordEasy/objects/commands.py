@@ -64,7 +64,6 @@ class Command:
 					return await self._fct(*new_args)
 				else:
 					return self._fct(*new_args)
-
 			except Exception as e:
 				raise errors.CommandError(e, self)
 		else:
@@ -78,7 +77,7 @@ class CommandAdmin(Command):
 		super().__init__(_function, name, aliases, types_options, checks)
 
 	async def execute(self, message, *args, cmd_set_instance=None):
-		if message.author.guild_permissions.administrator:
+		if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel) or message.author.guild_permissions.administrator:
 			await super().execute(message, *args, cmd_set_instance=cmd_set_instance)
 		else:
 			raise errors.DiscordPermissionError(self)
