@@ -16,7 +16,7 @@ my_prefix_bot = ">"
 my_bot = Bot(prefix=my_prefix_bot, token=my_token_bot, print_traceback=True, send_errors=False, sep_args= " ")
 
 # Just functions was created
-my_bot.add_commands({'Hello': hello, 'Product': (product, [int, int])})
+my_bot.add_commands({'Hello': hello, 'Product': product})
 my_bot.add_command(admin, admin=True)
 
 # Commands were created manually

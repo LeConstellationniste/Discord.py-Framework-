@@ -9,7 +9,7 @@ async def hello(message):
 async def admin(message):
 	await message.channel.send(f"Hello {message.author.mention}! You are administrator!", reference=message.to_reference())
 
-async def product(message, a, b):
+async def product(message, a: int, b: int):
 	await message.channel.send(f"`{a}*{b} = {a*b}`", reference=message.to_reference())
 
 
@@ -23,9 +23,9 @@ async def hello(message):
 async def admin(message):
 	await message.channel.send(f"Hello {message.author.mention}! You are administrator!", reference=message.to_reference())
 
-async def product(message, a, b):
+async def product(message, a: int, b: int):
 	await message.channel.send(f"`{a}*{b} = {a*b}`", reference=message.to_reference())
 
 cmd_hello = Command(hello, name="Hello", aliases=("hello", "Hi", "hi"))
 cmd_admin = CommandAdmin(admin, name="Admin")
-cmd_product = Command(product, name="Product", types_options=[int, int])
+cmd_product = Command(product, name="Product")
