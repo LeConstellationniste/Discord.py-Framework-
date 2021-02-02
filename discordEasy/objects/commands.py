@@ -1,4 +1,4 @@
-from inspect import isfunction, ismethod, isroutine, iscoroutine, signature
+from inspect import isfunction, ismethod, isroutine, iscoroutine, signature, _empty
 
 import discord
 
@@ -8,13 +8,13 @@ from .. import utils
 
 # Class Command
 class Command:
-	def __init__(self, _function, name: str = None, aliases: list = [], types_options: list = [], checks: list = []):
+	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = ""):
 		""" Arguments:
 			* _function: the function to execute, it's the base of command
 			* name: the name of command, if None, the name attribute of function is used. It's the name which is used in Discord to call the command.
 			* aliases: a list of aliases possible to call the command in Discord.
-			* types_options: a list or types (str, int, float...) in order of arguments in _function. Use to convert str -> type.
 			* check: a function which return a boolean to ckeck if the command must be executed or not, by default, there isn't check.
+			* description: a short description (str) for the command.
 		"""
 
 		self.name = name
@@ -22,10 +22,10 @@ class Command:
 			self.aliases = list(aliases)
 		else:
 			raise ValueError(f"aliases must be a list or tuple, not a {type(aliases)}")
-		self.types_options = types_options
 		if isfunction(_function):
 			self._fct = _function
-			self.nb_args = len(signature(self._fct).parameters) - 1  # -1 to not take Message argument
+			self.args_signature = [{"type": v.annotation if isinstance(v.annotation, type) else _empty, 
+									"default": v.default} for k, v in signature(self._fct).parameters.items()]
 		else:
 			raise ValueError(f"_function must be a function, not a {type(_function)}")
 		
@@ -34,6 +34,8 @@ class Command:
 				raise ValueError(f"checks must be a list containing functions not {type(check)}")
 
 		self.checks = checks
+		self.delete_message = delete_message
+		self.description = description
 
 	def name_isValid(self, name: str):
 		if isinstance(name, str):
@@ -47,17 +49,30 @@ class Command:
 		return valid
 
 	async def execute(self, message, *args, cmd_set_instance=None):
+		if self.delete_message:
+			await utils.safe_delete(message, delay_=3)
 		if self.check(message):
 			try:
-				base_args = [message] if cmd_set_instance is None else [cmd_set_instance, message]
-				new_args = base_args + utils.convert_list_str(list(args), self.types_options)
+				new_args = [message] if cmd_set_instance is None else [cmd_set_instance, message]
+				n_base_args = len(new_args)
+				new_args += args[:len(self.args_signature)-n_base_args]
+
+				for i in range(len(new_args), len(self.args_signature)):
+					if self.args_signature[i]['default'] is not _empty:
+						new_args.append(self.args_signature[i]['default'])
+					else:
+						raise TypeError("Missing 1 required positional argument")
+
+				for i, arg in enumerate(new_args[n_base_args:]):
+					if self.args_signature[i+n_base_args]['type'] != _empty:
+						new_args[i+n_base_args] = self.args_signature[i+n_base_args]['type'](arg)
+
+
 			except ValueError as e:
 				raise errors.DiscordTypeError(e, self)
+
 			except TypeError as e:
 				raise errors.MissingArgumentsError(e, self)
-
-			if len(args) < self.nb_args:
-				raise errors.MissingArgumentsError(TypeError("Missing 1 or more required positional argument"), self)
 
 			try:
 				if isroutine(self._fct):
@@ -73,8 +88,8 @@ class Command:
 class CommandAdmin(Command):
 	"""Command for admin of guild."""
 	
-	def __init__(self, _function, name: str = None, aliases: list = [], types_options: list = [], checks: list = []):
-		super().__init__(_function, name, aliases, types_options, checks)
+	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = ""):
+		super().__init__(_function, name, aliases, checks, delete_message, description)
 
 	async def execute(self, message, *args, cmd_set_instance=None):
 		if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel) or message.author.guild_permissions.administrator:
@@ -86,8 +101,8 @@ class CommandAdmin(Command):
 class CommandSuperAdmin(CommandAdmin):
 	"""Command for creator of bot and user in white list. User must be also a administrator."""
 
-	def __init__(self, _function, name: str = None, aliases: list = [], types_options: list = [], checks: list = [], white_list: list = []):
-		super().__init__(_function, name, aliases, types_options, checks)
+	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = "", white_list: list = []):
+		super().__init__(_function, name, aliases, checks, delete_message, description)
 		self.white_list = white_list
 
 	def add_user(self, user_id: int):
@@ -111,11 +126,11 @@ class CommandSuperAdmin(CommandAdmin):
 
 # Decorator for easy construction of command
 
-def command(name: str = None, aliases: list = [], types_options: list = [], checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
+def command(name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = "", admin: bool = False, super_admin: bool = False, white_list: list = []):
 	def decorator(_fct):
 		if super_admin:
-			return CommandSuperAdmin(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks, white_list=white_list)
+			return CommandSuperAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description, white_list=white_list)
 		elif admin:
-			return CommandAdmin(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks)
-		return Command(_fct, name=name, aliases=aliases, types_options=types_options, checks=checks)
+			return CommandAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description)
+		return Command(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description)
 	return decorator
