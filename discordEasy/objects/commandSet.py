@@ -35,7 +35,7 @@ class BaseHelp(CommandSet):
 		super().__init__()
 		self.description = "The help commands to learn how to use the bot."
 		self.bot = bot
-		self.name = "Help"
+		self.name = "Commands Help"
 
 	def base_embed(self, title, description: str = "", author: discord.Member = None) -> discord.Embed:
 		em = discord.Embed(title=title, description=description, color=self.bot.colour)
