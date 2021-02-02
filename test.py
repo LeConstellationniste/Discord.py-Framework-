@@ -12,11 +12,12 @@ async def cmd1(msg: discord.Message):
 	await msg.channel.send(f"Bonjour {msg.author.mention} !")
 
 
-async def cmd2(msg: discord.Message, a):
-	await msg.channel.send(f"Tu me dis\n> {a}")
+async def cmd2(msg: discord.Message, a=None):
+	mon_msg = f"Tu me dis\n> {a}" if a is not None else "Tu me dis rien ?"
+	await msg.channel.send(mon_msg)
 
 
-async def cmd3(msg: discord.Message, a, b):
+async def cmd3(msg: discord.Message, a: int, b: int = 0):
 	await msg.channel.send(f"Le résultat est : `{a} + {b} = {int(a)+int(b)}`")
 
 
@@ -55,25 +56,22 @@ async def on_bulk_message_delete(messages):
 class MyCommandSet(CommandSet):
 	def __init__(self):
 		super().__init__()
+		self.description = "Un set de commandes pour tester le bot."
 
-	@command(name="soustraction", aliases=['sous'], types_options=[int, int])
-	async def soustraction(self, message, a, b):
+	@command(name="soustraction", aliases=['sous'], description="Un commande pour soustraire 2 nombres entier a et b: `a - b`. Exemple de commande : `soustraction 3 2`.")
+	async def soustraction(self, message, a: int, b: int):
 		await message.channel.send(f"`{a} - {b} = {a-b}`")
 
-	@listener()
-	async def on_reaction_add(self, reaction, user):
-		await reaction.message.channel.send('reaction ajouté 2!')
-
-	@command(name='admin', admin=True)
+	@command(name='admin', admin=True, description="Une commande pour savoir si tu es admin ou pas.")
 	async def admin(self, message):
 		await message.channel.send("tu es admin!")
 
-	@command(name='superAdmin', aliases=('superA', ), super_admin=True, white_list=[508767792124657674])
+	@command(name='superAdmin', aliases=('superA', 'SuperAdmin', 'SuperA'), description="Une commande pour savoir si tu es super admin ou pas.", super_admin=True, white_list=[508767792124657674])
 	async def super_admin(self, message):
 		await message.channel.send("Tu es super admin!")
 
-@command(name='produit', aliases=('prod', ), types_options=[int, int])
-async def product(message, a, b):
+@command(name='produit', aliases=('prod', 'product', 'Produit', 'Product', 'Prod'), description="Un commande pour multiplier 2 nombres entier a et b: `a*b`. Exemple de commande : `produit 3 2`.")
+async def product(message, a: int, b: int):
 	await message.channel.send(f"`{a}*{b} = {a*b}`")
 
 def check(message):
@@ -86,10 +84,10 @@ async def check_test(message):
 # Bot
 token = ""
 bot = Bot(">", token, send_errors=True, sep_args="$")
-bot.add_command(cmd1)
-bot.add_commands({'repeat': cmd2, 'addition': (cmd3, [int, int])})
+bot.add_command(cmd1, description="Une commande pour que le bot te dise bonjour!")
+bot.add_commands({'repeat': cmd2, 'addition': cmd3})
 bot.add_listener(on_typing)
-bot.add_listeners([on_invite_create, on_bulk_message_delete, on_member_join, on_member_remove, on_reaction_add, on_reaction_remove, on_guild_channel_update])
+bot.add_listeners([on_invite_create, on_bulk_message_delete, on_member_join, on_member_remove, on_guild_channel_update])
 bot.add_commands(MyCommandSet())
 bot.add_command(product)
 bot.add_command(check_test)

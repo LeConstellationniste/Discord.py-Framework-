@@ -4,7 +4,7 @@ import datetime
 
 import discord
 
-from .objects.commandSet import CommandSet
+from .objects.commandSet import CommandSet, BaseHelp
 from .objects.commands import Command, CommandAdmin, CommandSuperAdmin
 from .objects.listeners import Listener
 from . import errors
@@ -15,11 +15,13 @@ from . import utils
 class BaseBot(discord.Client):
 	"""A base class for Bot."""
 
-	def __init__(self, prefix: str, token: str, description: str = ""):
+	def __init__(self, prefix: str, token: str, description: str = "", colour: discord.Colour = discord.Colour.blue(), colour_error: discord.Colour = discord.Colour.red()):
 		super().__init__()
 		self.prefix = prefix
 		self.token = token
 		self.description = description
+		self.colour = colour
+		self.colour_error = colour_error
 		self.avatar_url = None  # avatar url of bot, initialized in 'on_ready' event
 		self.app_info = None  # AppInfo instance initialized in 'on_ready' event
 
@@ -40,12 +42,16 @@ class BaseBot(discord.Client):
 		else:
 			print()
 			Logs.error(error.message)
-			print(traceback.format_exc())
+			traceback_msg = traceback.format_exc()
+			traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
+			print(traceback_msg)
 
 	async def on_discord_event_error(self, error):
 		print()
 		Logs.error(error.message)
-		print(traceback.format_exc())
+		traceback_msg = traceback.format_exc()
+		traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
+		print(traceback_msg)
 
 	async def on_missing_arguments(self, channel):
 		if not isinstance(channel, discord.TextChannel):
@@ -106,6 +112,7 @@ class Bot(BaseBot):
 		self.commands = []
 		self.listeners = []
 		self.list_set = []
+		BaseHelp.setup(self)
 
 	async def check_execute_listener(self, event_name: str, *args, **kwargs):
 		try:
@@ -271,6 +278,8 @@ class Bot(BaseBot):
 	async def send_error_to_owner(self, error, traceback_msg, where):
 		em = discord.Embed(title="Error raised", colour=discord.Colour.red())
 		em.description = f"A error {type(error)} was raised in {where}:\n```{traceback_msg}```"
+		if len(em.description) > 2045:
+			em.description = f"A error {type(error)} was raised. It is too long to be sent."
 		em.timestamp = datetime.datetime.utcnow()
 		await self.app_info.owner.send(embed=em)
 
@@ -280,7 +289,8 @@ class Bot(BaseBot):
 			await self.on_missing_arguments(message.channel)
 
 		elif isinstance(error, errors.DiscordTypeError):
-			await self.on_type_error(message.channel, error.cmd.types_options)
+			types_options = [arg['type'] for arg in error.cmd.args_signature]
+			await self.on_type_error(message.channel, types_options[types_options.index(discord.Message)+1:])
 
 		elif isinstance(error, errors.DiscordPermissionError):
 			await self.on_permission_error(message.channel)
@@ -295,29 +305,31 @@ class Bot(BaseBot):
 			print()
 			Logs.error(error.message)
 			traceback_msg = traceback.format_exc()
-			if self.send_errors:
-				await self.send_error_to_owner(error, traceback_msg, error.cmd._fct.__name__)
+			traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
 			if self.print_traceback:
 				print(traceback_msg)
+			if self.send_errors:
+				await self.send_error_to_owner(error, traceback_msg, error.cmd._fct.__name__)
 
 	async def on_discord_event_error(self, error):
 		print()
 		Logs.error(error.message)
 		traceback_msg = traceback.format_exc()
+		traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
+		if self.print_traceback:
+				print(traceback_msg)
 		if self.send_errors:
 			await self.send_error_to_owner(error, traceback_msg, error.listener._fct.__name__)
-		if self.print_traceback:
-			print(traceback_msg)
 
-	def add_command(self, command, checks: list = [], types_options: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
+	def add_command(self, command, checks: list = [], delete_message: bool = False, description: str = "", admin: bool = False, super_admin: bool = False, white_list: list = []):
 		if isinstance(command, Command):
 			self.commands.append(command)
 		elif inspect.isfunction(command) and super_admin:
-			self.commands.append(CommandSuperAdmin(self, command, command.__name__, types_options=types_options, checks=checks, white_list=white_list))
+			self.commands.append(CommandSuperAdmin(self, command, command.__name__, checks=checks, delete_message=delete_message, description=description, white_list=white_list))
 		elif inspect.isfunction(command) and admin:
-			self.commands.append(CommandAdmin(command, command.__name__, types_options=types_options, checks=checks))
+			self.commands.append(CommandAdmin(command, command.__name__, checks=checks, delete_message=delete_message, description=description))
 		elif inspect.isfunction(command):
-			self.commands.append(Command(command, command.__name__, types_options=types_options, checks=checks))
+			self.commands.append(Command(command, command.__name__, checks=checks, delete_message=delete_message, description=description))
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
@@ -329,28 +341,19 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands, checks: list = [], admin: bool = False, super_admin: bool = False, white_list: list = []):
+	def add_commands(self, commands, checks: list = [], delete_message: bool = False, admin: bool = False, super_admin: bool = False, white_list: list = []):
 		if isinstance(commands, dict):
 			for name, cmd in commands.items():
-				if (isinstance(cmd, tuple) or isinstance(cmd, list)) and super_admin:
-					self.add_command(CommandSuperAdmin(self, cmd[0], checks=checks, name=name, types_options=cmd[1], white_list=white_list))
-				elif (isinstance(cmd, tuple) or isinstance(cmd, list)) and admin:
-					self.add_command(CommandAdmin(cmd[0], checks=checks, name=name, types_options=cmd[1]))
-				elif isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(Command(cmd[0], checks=checks, name=name, types_options=cmd[1]))
-				elif super_admin:
-					self.add_command(CommandSuperAdmin(cmd, checks=checks, name=name, white_list=white_list))
+				if super_admin:
+					self.add_command(CommandSuperAdmin(cmd, checks=checks, delete_message=delete_message, name=name, white_list=white_list))
 				elif admin:
-					self.add_command(CommandAdmin(cmd, checks=checks, name=name))
+					self.add_command(CommandAdmin(cmd, checks=checks, delete_message=delete_message, name=name))
 				else:
-					self.add_command(Command(cmd, checks=checks, name=name))
+					self.add_command(Command(cmd, checks=checks, delete_message=delete_message, name=name))
 
 		elif isinstance(commands, list):
 			for cmd in commands:
-				if isinstance(cmd, tuple) or isinstance(cmd, list):
-					self.add_command(cmd[0], checks=checks, types_options=cmd[1], super_admin=super_admin, white_list=white_list)
-				else:
-					self.add_command(cmd, checks=checks, super_admin=super_admin, white_list=white_list)
+				self.add_command(cmd, checks=checks, delete_message=delete_message, super_admin=super_admin, white_list=white_list)
 
 		elif isinstance(commands, CommandSet):
 			self.list_set.append(commands)

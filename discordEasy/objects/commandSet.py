@@ -1,27 +1,135 @@
 from inspect import getmembers
+import asyncio
 
 import discord
 
-from . import Listener, Command
+from . import Listener, Command, command
+from ..utils import list_to_str
 
 
 class CommandSet:
 	"""Base class to create a group of commands and listeners"""
 
-	def __init__(self):
+	def __init__(self, name: str = None):
 		methods = getmembers(self)
-		self.commands = [method for name, method in methods if isinstance(method, Command)]
-		self.listeners = [method for name, method in methods if isinstance(method, Listener)]
-		for cmd in self.commands:
-			cmd.nb_args -= 1  # -1 to don't take the __self__ argument
+		self.commands = {name: method for name, method in methods if isinstance(method, Command)}
+		self.listeners = {name: method for name, method in methods if isinstance(method, Listener)}
+		self.name = name if name is not None  else type(self).__name__
+		self.description = ""
 
 	async def execute_cmd(self, message, name, options):
-		for cmd in self.commands:
+		for cmd in self.commands.values():
 			if cmd.name_isValid(name):
 				await cmd.execute(message, cmd_set_instance=self, *options)
 
 	async def execute_listener(self, event_name, *args, **kwargs):
-		for listener in self.listeners:
+		for listener in self.listeners.values():
 			if listener.event_name == event_name:
 				await listener.execute(self, *args, **kwargs)
+
+
+class BaseHelp(CommandSet):
+	"""A base class for help command, this class is used also for the default help command."""
+
+	def __init__(self, bot):
+		super().__init__()
+		self.description = "The help commands to learn how to use the bot."
+		self.bot = bot
+		self.name = "Help"
+
+	def base_embed(self, title, description: str = "", author: discord.Member = None) -> discord.Embed:
+		em = discord.Embed(title=title, description=description, color=self.bot.colour)
+		if author is not None:
+			em.set_author(name=author.name, icon_url=author.avatar_url)
+		em.set_thumbnail(url=self.bot.avatar_url)
+		return em
+
+	def first_page(self, author: discord.Member = None) -> discord.Embed:
+		desc_bot = f"""{self.bot.description}\n\nPrefix: `{self.bot.prefix}`\nAuthor: {self.bot.app_info.owner.name}"""
+		em = self.base_embed(f"Help {self.bot.app_info.name}", description=desc_bot, author=author)
+		msg_help = f"""To get this message use the command `help`: `{self.bot.prefix}help`.
+		Aliases: {list_to_str(self.commands['help'].aliases).replace("'", "`")}"""
+		em.add_field(name="Help command", value=msg_help)
+		return em
+
+	def command_pages(self, set_commands, author: discord.Member = None) -> list:
+		title = f"Help {set_commands.name}" if isinstance(set_commands, CommandSet) else f"Help {self.bot.app_info.name}"
+		description = set_commands.description if isinstance(set_commands, CommandSet) else ""
+		em = self.base_embed(title, description, author=author)
+		pages = [em]
+		list_commands = set_commands.commands.values() if isinstance(set_commands, CommandSet) else set_commands
+		nb_pages = 1
+		nb_cmd = 0
+		for cmd in list_commands:
+			if nb_cmd == 8:
+				em = self.base_embed(title=title, description=description, author=author)
+				pages.append(em)
+				nb_cmd = 0
+				nb_pages += 1
+
+			msg = f"""{cmd.description}\nName: `{cmd.name}`\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}"""
+			em.add_field(name=f"Command {cmd.name}", value=msg, inline=False)
+			nb_cmd += 1
+		return pages
+
+
+	@command(name="help", aliases=("Help", ), delete_message=True, description="The general help command.")
+	async def help(self, msg):
+		def check(reaction, user):
+			return not user.bot and str(reaction.emoji) in ("◀️", "▶️", "⏹️")
+
+		pages = [self.first_page(msg.author)] + self.command_pages(self.bot.commands, msg.author)
+		for cmd_set in self.bot.list_set:
+			pages += self.command_pages(cmd_set, msg.author)
+		nb_pages = len(pages)
+		current_page = 1
+
+		current_embed = pages[current_page-1]
+		current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
+		help_msg = await msg.channel.send(embed=current_embed)
+		await help_msg.add_reaction("◀️")
+		await help_msg.add_reaction("⏹️")
+		await help_msg.add_reaction("▶️")
+
+		while help_msg is not None:
+			try:
+				reaction, user = await self.bot.wait_for("reaction_add", timeout=60, check=check)
+				# waiting for a reaction to be added. Times out after 60 seconds
+				if str(reaction.emoji) == "▶️" and current_page != nb_pages:
+					current_page += 1
+					current_embed = pages[current_page - 1]
+					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
+					await help_msg.edit(embed=current_embed)
+
+				elif str(reaction.emoji) == "◀️" and current_page > 1:
+					current_page -= 1
+					current_embed = pages[current_page - 1]
+					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
+					await help_msg.edit(embed=current_embed)
+
+				elif str(reaction.emoji) == "⏹️":
+					await help_msg.delete(delay=1)
+					break
+
+				try:
+					await help_msg.remove_reaction(reaction, user)
+				except discord.errors.Forbidden:
+					pass
+
+			except asyncio.TimeoutError:
+				try:
+					await help_msg.remove_reaction("◀️", self.bot.user)
+					await help_msg.remove_reaction("⏹️", self.bot.user)
+					await help_msg.remove_reaction("▶️", self.bot.user)
+					break
+				except discord.errors.Forbidden:
+					pass
+
+			except discord.errors.Forbidden:
+				pass
+
+	@staticmethod
+	def setup(bot):
+		bot.add_commands(BaseHelp(bot))
+
 
