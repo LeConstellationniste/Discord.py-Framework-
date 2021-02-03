@@ -356,7 +356,8 @@ class Bot(BaseBot):
 				self.add_command(cmd, checks=checks, delete_message=delete_message, super_admin=super_admin, white_list=white_list)
 
 		elif isinstance(commands, CommandSet):
-			self.list_set.append(commands)
+			if type(commands) not in [type(set_) for set_ in self.list_set]:
+				self.list_set.append(commands)
 
 		else:
 			raise ValueError(f"commands must be a CommandSet, a dict or a list, not {type(command)}")
