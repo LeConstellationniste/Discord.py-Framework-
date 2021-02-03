@@ -13,6 +13,11 @@ def datetime_log(date_format: str = "%Y-%m-%d to %H:%M:%S") -> str:
 
 class Logs:
 	date_fmt = "%Y-%m-%d to %H:%M:%S"
+	path_info = None
+	path_debug = None
+	path_warninge = None
+	path_error = None
+	path_success = None
 	if colorama_imported:
 		init()  # init colorama for Window
 		color_debug = Fore.CYAN
@@ -31,6 +36,9 @@ class Logs:
 		if path_save is not None:
 			with open(path_save, 'a') as f:
 				f.write(msg_log+"\n")
+		elif Logs.path_info is not None:
+			with open(Logs.path_info, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
 	def debug(msg: str, path_save: str = None):
@@ -41,6 +49,9 @@ class Logs:
 			print(msg_log)
 		if path_save is not None:
 			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
+		elif Logs.path_debug is not None:
+			with open(Logs.path_debug, 'a') as f:
 				f.write(msg_log+"\n")
 
 	@staticmethod
@@ -53,6 +64,9 @@ class Logs:
 		if path_save is not None:
 			with open(path_save, 'a') as f:
 				f.write(msg_log+"\n")
+		elif Logs.path_error is not None:
+			with open(Logs.path_error, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
 	def warning(msg: str, path_save: str = None):
@@ -64,6 +78,9 @@ class Logs:
 		if path_save is not None:
 			with open(path_save, 'a') as f:
 				f.write(msg_log+"\n")
+		elif Logs.path_warning is not None:
+			with open(Logs.path_warning, 'a') as f:
+				f.write(msg_log+"\n")
 
 	@staticmethod
 	def success(msg: str, path_save: str = None):
@@ -74,4 +91,7 @@ class Logs:
 			print(msg_log)
 		if path_save is not None:
 			with open(path_save, 'a') as f:
+				f.write(msg_log+"\n")
+		elif Logs.path_success is not None:
+			with open(Logs.path_success, 'a') as f:
 				f.write(msg_log+"\n")
