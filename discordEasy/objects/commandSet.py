@@ -3,7 +3,7 @@ import asyncio
 
 import discord
 
-from . import Listener, Command, command
+from . import Listener, Command, command, CommandAdmin, CommandSuperAdmin
 from ..utils import list_to_str
 
 
@@ -52,7 +52,7 @@ class BaseHelp(CommandSet):
 		em.add_field(name="Help command", value=msg_help)
 		return em
 
-	def command_pages(self, set_commands, author: discord.Member = None) -> list:
+	def command_pages(self, set_commands, author: discord.Member) -> list:
 		title = f"Help {set_commands.name}" if isinstance(set_commands, CommandSet) else f"Help {self.bot.app_info.name}"
 		description = set_commands.description if isinstance(set_commands, CommandSet) else ""
 		em = self.base_embed(title, description, author=author)
@@ -66,10 +66,10 @@ class BaseHelp(CommandSet):
 				pages.append(em)
 				nb_cmd = 0
 				nb_pages += 1
-
-			msg = f"""{cmd.description}\nName: `{cmd.name}`\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}"""
-			em.add_field(name=f"Command {cmd.name}", value=msg, inline=False)
-			nb_cmd += 1
+			if (type(cmd) == CommandAdmin and isinstance(author, discord.Member) and author.guild_permissions.administrator) or (type(cmd) == CommandSuperAdmin and author.id in cmd.white_list) or type(cmd) == Command:
+				msg = f"""{cmd.description}\nName: `{cmd.name}`\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}"""
+				em.add_field(name=f"Command {cmd.name}", value=msg, inline=False)
+				nb_cmd += 1
 		return pages
 
 
