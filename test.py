@@ -66,7 +66,7 @@ class MyCommandSet(CommandSet):
 	async def admin(self, message):
 		await message.channel.send("tu es admin!")
 
-	@command(name='superAdmin', aliases=('superA', 'SuperAdmin', 'SuperA'), description="Une commande pour savoir si tu es super admin ou pas.", super_admin=True, white_list=[508767792124657674])
+	@command(name='superAdmin', aliases=('superA', 'SuperAdmin', 'SuperA'), description="Une commande pour savoir si tu es super admin ou pas.", super_admin=True, white_list=[])
 	async def super_admin(self, message):
 		await message.channel.send("Tu es super admin!")
 
