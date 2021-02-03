@@ -70,7 +70,7 @@ class BaseHelp(CommandSet):
 				msg = f"""{cmd.description}\nName: `{cmd.name}`\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}"""
 				em.add_field(name=f"Command {cmd.name}", value=msg, inline=False)
 				nb_cmd += 1
-		return pages
+		return [em for em in pages if len(em.fields) > 0]
 
 
 	@command(name="help", aliases=("Help", ), delete_message=True, description="The general help command.")
@@ -101,8 +101,20 @@ class BaseHelp(CommandSet):
 					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
 					await help_msg.edit(embed=current_embed)
 
+				elif str(reaction.emoji) == "▶️":
+					current_page = 1
+					current_embed = pages[current_page - 1]
+					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
+					await help_msg.edit(embed=current_embed)
+
 				elif str(reaction.emoji) == "◀️" and current_page > 1:
 					current_page -= 1
+					current_embed = pages[current_page - 1]
+					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
+					await help_msg.edit(embed=current_embed)
+
+				elif str(reaction.emoji) == "◀️":
+					current_page = nb_pages
 					current_embed = pages[current_page - 1]
 					current_embed.set_footer(text=f"page: {current_page}/{nb_pages}")
 					await help_msg.edit(embed=current_embed)
