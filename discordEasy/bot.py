@@ -58,7 +58,7 @@ class BaseBot(discord.Client):
 			raise TypeError("channel must be a discord.TextChannel")
 
 		msg_error = "Missing options to execute this command. Use the help command for more informations."
-		embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
+		embed_error = discord.Embed(title="Option Error", description=msg_error, color=self.colour_error)
 		await channel.send(embed=embed_error, delete_after=10)
 
 	async def on_type_error(self, channel, types: list):
@@ -66,7 +66,7 @@ class BaseBot(discord.Client):
 			raise TypeError("channel must be a discord.TextChannel")
 
 		msg_error = "One or several options have a bad type. The type of options must be, in order: " + utils.replace_multiple(str(types), ['class', '[', ']', '>', '<']).replace("'", "`")
-		embed_error = discord.Embed(title="Option Error", description=msg_error, color=discord.Colour.red())
+		embed_error = discord.Embed(title="Option Error", description=msg_error, color=self.colour_error)
 		await channel.send(embed=embed_error, delete_after=10)
 
 	async def on_forbidden_error(self, message):
@@ -74,7 +74,7 @@ class BaseBot(discord.Client):
 			raise TypeError("message must be a discord.Message")
 
 		msg_error = "Missing permission to do this command."
-		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
+		em_error = discord.Embed(title="Missing permission", description=msg_error, color=self.colour_error)
 		try:
 			await message.channel.send(embed=em_error, delete_after=10)
 		except discord.errors.Forbidden:
@@ -86,7 +86,7 @@ class BaseBot(discord.Client):
 			raise TypeError("channel must be a discord.TextChannel")
 
 		msg_error = "You have not the permission to do this command."
-		em_error = discord.Embed(title="Missing permission", description=msg_error, color=discord.Colour.red())
+		em_error = discord.Embed(title="Missing permission", description=msg_error, color=self.colour_error)
 		await channel.send(embed=em_error, delete_after=10)
 
 	async def on_condition_error(self, channel):
@@ -94,7 +94,7 @@ class BaseBot(discord.Client):
 			raise TypeError("channel must be a discord.TextChannel")
 
 		msg_error = "You don't check conditions to execute this command. For more information, use the help command."
-		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=discord.Colour.red())
+		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=self.colour_error)
 		await channel.send(embed=em_error, delete_after=10)
 
 	def run(self):
@@ -276,7 +276,7 @@ class Bot(BaseBot):
 		await self.check_execute_listener('on_relationship_update', before, after)
 
 	async def send_error_to_owner(self, error, traceback_msg, where):
-		em = discord.Embed(title="Error raised", colour=discord.Colour.red())
+		em = discord.Embed(title="Error raised", colour=self.colour_error)
 		em.description = f"A error {type(error)} was raised in {where}:\n```{traceback_msg}```"
 		if len(em.description) > 2045:
 			em.description = f"A error {type(error)} was raised. It is too long to be sent."
