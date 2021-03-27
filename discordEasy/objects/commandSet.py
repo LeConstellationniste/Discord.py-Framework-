@@ -1,3 +1,5 @@
+from typing import Union, Iterable, Coroutine
+
 from inspect import getmembers
 import asyncio
 
@@ -17,12 +19,12 @@ class CommandSet:
 		self.name = name if name is not None  else type(self).__name__
 		self.description = ""
 
-	async def execute_cmd(self, message, name, options):
+	async def execute_cmd(self, message: discord.Message, name: str, options: Iterable) -> None:
 		for cmd in self.commands.values():
 			if cmd.name_isValid(name):
 				await cmd.execute(message, cmd_set_instance=self, *options)
 
-	async def execute_listener(self, event_name, *args, **kwargs):
+	async def execute_listener(self, event_name: str, *args, **kwargs) -> None:
 		for listener in self.listeners.values():
 			if listener.event_name == event_name:
 				await listener.execute(self, *args, **kwargs)
@@ -37,7 +39,7 @@ class BaseHelp(CommandSet):
 		self.bot = bot
 		self.name = "Commands Help"
 
-	def base_embed(self, title, description: str = "", author: discord.Member = None) -> discord.Embed:
+	def base_embed(self, title: str, description: str = "", author: discord.Member = None) -> discord.Embed:
 		em = discord.Embed(title=title, description=description, color=self.bot.colour)
 		if author is not None:
 			em.set_author(name=author.name, icon_url=author.avatar_url)
@@ -52,7 +54,7 @@ class BaseHelp(CommandSet):
 		em.add_field(name="Help command", value=msg_help)
 		return em
 
-	def command_pages(self, set_commands, author: discord.Member) -> list:
+	def command_pages(self, set_commands: Union[CommandSet, Iterable], author: discord.Member) -> list:
 		title = f"Help {set_commands.name}" if isinstance(set_commands, CommandSet) else f"Help {self.bot.app_info.name}"
 		description = set_commands.description if isinstance(set_commands, CommandSet) else ""
 		em = self.base_embed(title, description, author=author)
