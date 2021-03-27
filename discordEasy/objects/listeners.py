@@ -1,3 +1,5 @@
+from typing import Union, Iterable, Coroutine, Callable
+
 from inspect import isroutine, isfunction
 import asyncio
 
@@ -8,7 +10,7 @@ from ..errors import DiscordEventError
 
 # class Listerner
 class Listener:
-	def __init__(self, _fct, event_name: str = None, checks: list = []):
+	def __init__(self, _fct: Coroutine, event_name: str = None, checks: Iterable[Callable] = []):
 		if isroutine(_fct):
 			self._fct = _fct
 		else:
@@ -21,10 +23,10 @@ class Listener:
 
 		self.checks = checks
 
-	def check(self, *args):
+	def check(self, *args) -> bool:
 		valid = True
 		for check in self.checks:
-			valid = valid and check(*args)
+			valid &= check(*args)
 		return valid
 
 	async def execute(self, *args):
@@ -37,7 +39,7 @@ class Listener:
 
 # Decorator for easy construction of listeners
 
-def listener(event_name: str = None, checks: list = []):
+def listener(event_name: str = None, checks: Iterable[Callable] = []):
 	def decorator(_fct):
 		return Listener(_fct, event_name=event_name, checks=checks)
 	return decorator

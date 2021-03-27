@@ -1,3 +1,5 @@
+from typing import Union, Dict, Iterable, Coroutine, Callable
+
 import inspect
 import traceback
 import datetime
@@ -29,7 +31,7 @@ class BaseBot(discord.Client):
 		self.avatar_url = self.user.avatar_url
 		self.app_info = await self.application_info()
 
-	async def on_command_error(self, error, message):
+	async def on_command_error(self, error: Exception, message: discord.Message) -> None:
 
 		if isinstance(error, errors.MissingArgumentsError):
 			await self.on_missing_arguments(message.channel)
@@ -46,14 +48,14 @@ class BaseBot(discord.Client):
 			traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
 			print(traceback_msg)
 
-	async def on_discord_event_error(self, error):
+	async def on_discord_event_error(self, error: Exception):
 		print()
 		Logs.error(error.message)
 		traceback_msg = traceback.format_exc()
 		traceback_msg = traceback_msg[:traceback_msg.find("During handling of the above exception, another exception occurred:")]
 		print(traceback_msg)
 
-	async def on_missing_arguments(self, channel):
+	async def on_missing_arguments(self, channel: discord.TextChannel) -> None:
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 
@@ -61,7 +63,7 @@ class BaseBot(discord.Client):
 		embed_error = discord.Embed(title="Option Error", description=msg_error, color=self.colour_error)
 		await channel.send(embed=embed_error, delete_after=10)
 
-	async def on_type_error(self, channel, types: list):
+	async def on_type_error(self, channel, types: Iterable[type]) -> None:
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 
@@ -69,7 +71,7 @@ class BaseBot(discord.Client):
 		embed_error = discord.Embed(title="Option Error", description=msg_error, color=self.colour_error)
 		await channel.send(embed=embed_error, delete_after=10)
 
-	async def on_forbidden_error(self, message):
+	async def on_forbidden_error(self, message: discord.Message) -> None:
 		if not isinstance(message, discord.Message):
 			raise TypeError("message must be a discord.Message")
 
@@ -81,7 +83,7 @@ class BaseBot(discord.Client):
 			em_error.description = f"Missing permission to send message in {message.channel.mention}."
 			await message.author.send(embed=em_error, delete_after=10)
 
-	async def on_permission_error(self, channel):
+	async def on_permission_error(self, channel: discord.TextChannel) -> None:
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 
@@ -89,7 +91,7 @@ class BaseBot(discord.Client):
 		em_error = discord.Embed(title="Missing permission", description=msg_error, color=self.colour_error)
 		await channel.send(embed=em_error, delete_after=10)
 
-	async def on_condition_error(self, channel):
+	async def on_condition_error(self, channel: discord.TextChannel) -> None:
 		if not isinstance(channel, discord.TextChannel):
 			raise TypeError("channel must be a discord.TextChannel")
 
@@ -97,15 +99,15 @@ class BaseBot(discord.Client):
 		em_error = discord.Embed(title="Missing Conditions", description=msg_error, color=self.colour_error)
 		await channel.send(embed=em_error, delete_after=10)
 
-	def run(self):
+	def run(self) -> None:
 		super().run(self.token)
 
 
 class Bot(BaseBot):
 	"""Class Bot to build easier and quickly Discord bot."""
 
-	def __init__(self, prefix, token, send_errors: bool = False, print_traceback: bool = True, sep_args: str = " "):
-		super().__init__(prefix, token)
+	def __init__(self, prefix: str, token: str, send_errors: bool = False, print_traceback: bool = True, sep_args: str = " ", **kwargs):
+		super().__init__(prefix, token, **kwargs)
 		self.send_errors = send_errors  # If true, logs are send in private message to owner of bot
 		self.print_traceback = print_traceback
 		self.sep_args = sep_args
@@ -114,7 +116,7 @@ class Bot(BaseBot):
 		self.list_set = []
 		BaseHelp.setup(self)
 
-	async def check_execute_listener(self, event_name: str, *args, **kwargs):
+	async def check_execute_listener(self, event_name: str, *args, **kwargs) -> None:
 		try:
 			for listener in self.listeners:
 				if listener.event_name == event_name:
@@ -275,7 +277,7 @@ class Bot(BaseBot):
 	async def on_relationship_update(self, before, after):
 		await self.check_execute_listener('on_relationship_update', before, after)
 
-	async def send_error_to_owner(self, error, traceback_msg, where):
+	async def send_error_to_owner(self, error: Exception, traceback_msg: str, where: str) -> None:
 		em = discord.Embed(title="Error raised", colour=self.colour_error)
 		em.description = f"A error {type(error)} was raised in {where}:\n```{traceback_msg}```"
 		if len(em.description) > 2045:
@@ -283,7 +285,7 @@ class Bot(BaseBot):
 		em.timestamp = datetime.datetime.utcnow()
 		await self.app_info.owner.send(embed=em)
 
-	async def on_command_error(self, error, message):
+	async def on_command_error(self, error: Exception, message: discord.Message) -> None:
 
 		if isinstance(error, errors.MissingArgumentsError):
 			await self.on_missing_arguments(message.channel)
@@ -311,7 +313,7 @@ class Bot(BaseBot):
 			if self.send_errors:
 				await self.send_error_to_owner(error, traceback_msg, error.cmd._fct.__name__)
 
-	async def on_discord_event_error(self, error):
+	async def on_discord_event_error(self, error: Exception) -> None:
 		print()
 		Logs.error(error.message)
 		traceback_msg = traceback.format_exc()
@@ -321,7 +323,8 @@ class Bot(BaseBot):
 		if self.send_errors:
 			await self.send_error_to_owner(error, traceback_msg, error.listener._fct.__name__)
 
-	def add_command(self, command, checks: list = [], delete_message: bool = False, description: str = "", admin: bool = False, super_admin: bool = False, white_list: list = []):
+	def add_command(self, command, checks: Iterable[Callable] = [], delete_message: bool = False, description: str = "",
+					admin: bool = False, super_admin: bool = False, white_list: Iterable[int] = []) -> None:
 		if isinstance(command, Command):
 			self.commands.append(command)
 		elif inspect.isfunction(command) and super_admin:
@@ -333,7 +336,7 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"command must be a function or a Command, not {type(command)}")
 
-	def add_listener(self, listener, event_name: str = None, checks: list = []):
+	def add_listener(self, listener: Union[Listener, Coroutine], event_name: str = None, checks: Iterable[Callable] = []) -> None:
 		if isinstance(listener, Listener):
 			self.listeners.append(listener)
 		elif inspect.isroutine(listener):
@@ -341,7 +344,8 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"listener must be a Listener or a routine, not {type(listener)}")
 
-	def add_commands(self, commands, checks: list = [], delete_message: bool = False, admin: bool = False, super_admin: bool = False, white_list: list = []):
+	def add_commands(self, commands: Union[Dict[str, Coroutine], Iterable[Coroutine], CommandSet], checks: Iterable[Callable] = [],
+					delete_message: bool = False, admin: bool = False, super_admin: bool = False, white_list: Iterable[int] = []) -> None:
 		if isinstance(commands, dict):
 			for name, cmd in commands.items():
 				if super_admin:
@@ -362,7 +366,7 @@ class Bot(BaseBot):
 		else:
 			raise ValueError(f"commands must be a CommandSet, a dict or a list, not {type(command)}")
 
-	def add_listeners(self, listeners, checks: list = []):
+	def add_listeners(self, listeners: Union[Dict[str, Listener], Dict[str, Coroutine], Iterable[Listener], Iterable[Coroutine]], checks: Iterable[Callable] = []) -> None:
 		if isinstance(listeners, dict):
 			for event_name, listener in listeners.items():
 				self.add_listener(listener, event_name=event_name, checks=checks)
