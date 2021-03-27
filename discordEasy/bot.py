@@ -6,7 +6,7 @@ import datetime
 
 import discord
 
-from .objects.commandSet import CommandSet, BaseHelp
+from .objects.commandSet import CommandSet, BaseHelp, DevCommands
 from .objects.commands import Command, CommandAdmin, CommandSuperAdmin
 from .objects.listeners import Listener
 from . import errors
@@ -115,6 +115,7 @@ class Bot(BaseBot):
 		self.listeners = []
 		self.list_set = []
 		BaseHelp.setup(self)
+		DevCommands.setup(self)
 
 	async def check_execute_listener(self, event_name: str, *args, **kwargs) -> None:
 		try:
@@ -124,7 +125,7 @@ class Bot(BaseBot):
 			for cmd_set in self.list_set:
 				await cmd_set.execute_listener(event_name, *args, **kwargs)
 		except errors.DiscordEventError as e:
-			self.on_discord_event_error(e)
+			await self.on_discord_event_error(e)
 
 	async def on_ready(self):  # ok
 		await super().on_ready()

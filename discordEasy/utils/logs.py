@@ -15,7 +15,7 @@ class Logs:
 	date_fmt = "%Y-%m-%d to %H:%M:%S"
 	path_info = None
 	path_debug = None
-	path_warninge = None
+	path_warning = None
 	path_error = None
 	path_success = None
 	if colorama_imported:

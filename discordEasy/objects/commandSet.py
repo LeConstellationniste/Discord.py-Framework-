@@ -5,8 +5,8 @@ import asyncio
 
 import discord
 
-from . import Listener, Command, command, CommandAdmin, CommandSuperAdmin
-from ..utils import list_to_str
+from . import Listener, listener, Command, command, CommandAdmin, CommandSuperAdmin
+from ..utils import list_to_str, Logs
 
 
 class CommandSet:
@@ -14,8 +14,8 @@ class CommandSet:
 
 	def __init__(self, name: str = None):
 		methods = getmembers(self)
-		self.commands = {name: method for name, method in methods if isinstance(method, Command)}
-		self.listeners = {name: method for name, method in methods if isinstance(method, Listener)}
+		self.commands = {method[1].name: method[1] for method in methods if isinstance(method[1], Command)}
+		self.listeners = {method[1].event_name: method[1] for method in methods if isinstance(method[1], Listener)}
 		self.name = name if name is not None  else type(self).__name__
 		self.description = ""
 
@@ -145,5 +145,32 @@ class BaseHelp(CommandSet):
 	@staticmethod
 	def setup(bot):
 		bot.add_commands(BaseHelp(bot))
+
+
+class DevCommands(CommandSet):
+	"""A base class for development commands."""
+
+	def __init__(self, bot):
+		super().__init__()
+		self.description = "The utils commands to development."
+		self.bot = bot
+		self.name = "Development Commands"
+
+	@command(name="stopBot", aliases=("StopBot", "StopB", "stopB"), delete_message=True, super_admin=True, description="Disconnect the bot")
+	async def stop(self, msg):
+		em = discord.Embed(title="Logout in progress...", color=self.bot.colour)
+		em.description = "The bot will be logout in 5 seconds."
+		await msg.channel.send(embed=em, delete_after=4)
+		Logs.warning(f"{msg.author.name} disconnected the bot.")
+		await asyncio.sleep(5)
+		await self.bot.logout()
+
+	@listener()
+	async def on_ready(self):
+		self.commands["stopBot"].add_user(self.bot.app_info.owner.id)
+
+	@staticmethod
+	def setup(bot):
+		bot.add_commands(DevCommands(bot))
 
 
