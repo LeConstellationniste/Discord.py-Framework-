@@ -5,7 +5,7 @@ import asyncio
 from .logs import Logs
 
 
-async def safe_delete(message: discord.Message, delay_: int = 0, warning: bool = True):
+async def safe_delete(message: discord.Message, delay_: int = 0, warning: bool = True) -> None:
 	if isinstance(message, discord.Message):
 		try:
 			await message.delete(delay=delay_)

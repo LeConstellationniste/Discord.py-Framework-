@@ -1,3 +1,5 @@
+from typing import Union, Iterable, Coroutine, Callable
+
 from inspect import isfunction, ismethod, isroutine, iscoroutine, signature, _empty
 
 import discord
@@ -8,7 +10,8 @@ from .. import utils
 
 # Class Command
 class Command:
-	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = ""):
+	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [], checks: Iterable[Callable] = [],
+				delete_message: bool = False, description: str = ""):
 		""" Arguments:
 			* _function: the function to execute, it's the base of command
 			* name: the name of command, if None, the name attribute of function is used. It's the name which is used in Discord to call the command.
@@ -37,18 +40,18 @@ class Command:
 		self.delete_message = delete_message
 		self.description = description
 
-	def name_isValid(self, name: str):
+	def name_isValid(self, name: str) -> bool:
 		if isinstance(name, str):
 			return name == self.name or name in self.aliases
 		raise ValueError(f"`name` must be a str, not {type(name)}")
 
-	def check(self, message):
+	def check(self, message: discord.Message) -> bool:
 		valid = True
 		for check in self.checks:
-			valid = valid and check(message)
+			valid &= check(message)
 		return valid
 
-	async def execute(self, message, *args, cmd_set_instance=None):
+	async def execute(self, message: discord.Message, *args, cmd_set_instance=None):
 		if self.delete_message:
 			await utils.safe_delete(message, delay_=3)
 		if self.check(message):
@@ -88,10 +91,11 @@ class Command:
 class CommandAdmin(Command):
 	"""Command for admin of guild."""
 	
-	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = ""):
+	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [],
+				checks: Iterable[Callable] = [], delete_message: bool = False, description: str = ""):
 		super().__init__(_function, name, aliases, checks, delete_message, description)
 
-	async def execute(self, message, *args, cmd_set_instance=None):
+	async def execute(self, message: discord.Message, *args, cmd_set_instance=None) -> None:
 		if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel) or message.author.guild_permissions.administrator:
 			await super().execute(message, *args, cmd_set_instance=cmd_set_instance)
 		else:
@@ -101,23 +105,24 @@ class CommandAdmin(Command):
 class CommandSuperAdmin(CommandAdmin):
 	"""Command for creator of bot and user in white list. User must be also a administrator."""
 
-	def __init__(self, _function, name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = "", white_list: list = []):
+	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [],
+				checks: Iterable[Callable] = [], delete_message: bool = False, description: str = "", white_list: Iterable[int] = []):
 		super().__init__(_function, name, aliases, checks, delete_message, description)
 		self.white_list = white_list
 
-	def add_user(self, user_id: int):
+	def add_user(self, user_id: int) -> None:
 		if isinstance(user_id, int) and user_id not in self.white_list:
 			self.white_list.append(user_id)
 		elif not isinstance(user_id, int):
 			raise ValueError(f"user_id argument must be a integer not {type(user_id)}")
 
-	def remove_user(self, user_id: int):
+	def remove_user(self, user_id: int) -> None:
 		if isinstance(user_id, int) and user_id in self.white_list:
 			self.white_list.remove(user_id)
 		elif not isinstance(user_id, int):
 			raise ValueError(f"user_id argument must be a integer not {type(user_id)}")
 
-	async def execute(self, message, *args, cmd_set_instance=None):
+	async def execute(self, message: discord.Message, *args, cmd_set_instance=None) -> None:
 		if message.author.id in self.white_list:
 			await super().execute(message, *args, cmd_set_instance=cmd_set_instance)
 		else:
@@ -126,7 +131,8 @@ class CommandSuperAdmin(CommandAdmin):
 
 # Decorator for easy construction of command
 
-def command(name: str = None, aliases: list = [], checks: list = [], delete_message: bool = False, description: str = "", admin: bool = False, super_admin: bool = False, white_list: list = []):
+def command(name: str = None, aliases: Iterable[str] = [], checks: Iterable[Callable] = [], delete_message: bool = False,
+			description: str = "", admin: bool = False, super_admin: bool = False, white_list: Iterable[int] = []):
 	def decorator(_fct):
 		if super_admin:
 			return CommandSuperAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description, white_list=white_list)
