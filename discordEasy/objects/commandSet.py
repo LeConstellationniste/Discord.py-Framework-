@@ -32,6 +32,15 @@ class CommandSet:
 
 class BaseHelp(CommandSet):
 	"""A base class for help command, this class is used also for the default help command."""
+	types_examples = {
+						int: '1',
+						float : '1.5',
+						str: 'Hello',
+						discord.Member: '@member',
+						discord.User: '@user',
+						discord.Role: '@role',
+						discord.TextChannel: '#text-channel',
+					 }
 
 	def __init__(self, bot):
 		super().__init__()
@@ -69,9 +78,18 @@ class BaseHelp(CommandSet):
 				nb_cmd = 0
 				nb_pages += 1
 			if (type(cmd) == CommandAdmin and isinstance(author, discord.Member) and author.guild_permissions.administrator) or (type(cmd) == CommandSuperAdmin and author.id in cmd.white_list) or type(cmd) == Command:
-				msg = f"""{cmd.description}\nName: `{cmd.name}`\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}"""
-				em.add_field(name=f"Command {cmd.name}", value=msg, inline=False)
+				base_msg = f"{cmd.description}\n**Name:** `{cmd.name}`"
+				base_cmd = f"{self.bot.prefix}{cmd.name}"
+				sep_arg = f" {self.bot.sep_args}"
+				names_args = [arg['name'] for arg in cmd.args_signature]
+				examples_args = [BaseHelp.types_examples[arg['type']] if arg['type'] in BaseHelp.types_examples else arg['name'] for arg in cmd.args_signature]
+				use_fmt = f"\n**Use:** `{base_cmd} {sep_arg.join(names_args)}`"
+				example = f"\nExample: `{base_cmd} {sep_arg.join(examples_args)}`" if len(examples_args) > 0 else ""
+				aliases = f"""\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}""" if len(cmd.aliases) > 0 else ""
+				em.add_field(name=f"Command {cmd.name}", value=base_msg + use_fmt + example + aliases, inline=False)
 				nb_cmd += 1
+				del(names_args)
+				del(examples_args)
 		return [em for em in pages if len(em.fields) > 0]
 
 

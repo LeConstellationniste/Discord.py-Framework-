@@ -27,8 +27,9 @@ class Command:
 			raise ValueError(f"aliases must be a list or tuple, not a {type(aliases)}")
 		if isfunction(_function):
 			self._fct = _function
-			self.args_signature = [{"type": v.annotation if isinstance(v.annotation, type) else _empty, 
-									"default": v.default} for k, v in signature(self._fct).parameters.items()]
+			self.args_signature = [{"name": k,
+									"type": v.annotation if isinstance(v.annotation, type) else _empty, 
+									"default": v.default} for k, v in signature(self._fct).parameters.items() if k != 'self'][1:]  # delete first item which is the Message object.
 		else:
 			raise ValueError(f"_function must be a function, not a {type(_function)}")
 		
@@ -58,17 +59,17 @@ class Command:
 			try:
 				new_args = [message] if cmd_set_instance is None else [cmd_set_instance, message]
 				n_base_args = len(new_args)
-				new_args += args[:len(self.args_signature)-n_base_args]
+				new_args += args[:len(self.args_signature)]
 
-				for i in range(len(new_args), len(self.args_signature)):
+				for i in range(len(new_args) - n_base_args, len(self.args_signature)):
 					if self.args_signature[i]['default'] is not _empty:
 						new_args.append(self.args_signature[i]['default'])
 					else:
 						raise TypeError("Missing 1 required positional argument")
 
 				for i, arg in enumerate(new_args[n_base_args:]):
-					if self.args_signature[i+n_base_args]['type'] != _empty:
-						new_args[i+n_base_args] = self.args_signature[i+n_base_args]['type'](arg)
+					if self.args_signature[i]['type'] != _empty:
+						new_args[i+n_base_args] = self.args_signature[i]['type'](arg)
 
 
 			except ValueError as e:

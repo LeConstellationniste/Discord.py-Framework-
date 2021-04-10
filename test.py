@@ -58,7 +58,7 @@ class MyCommandSet(CommandSet):
 		super().__init__()
 		self.description = "Un set de commandes pour tester le bot."
 
-	@command(name="soustraction", aliases=['sous'], description="Un commande pour soustraire 2 nombres entier a et b: `a - b`. Exemple de commande : `soustraction 3 2`.")
+	@command(name="soustraction", aliases=['sous'], description="Un commande pour soustraire 2 nombres entier a et b: `a - b`.")
 	async def soustraction(self, message, a: int, b: int):
 		await message.channel.send(f"`{a} - {b} = {a-b}`")
 
@@ -70,7 +70,7 @@ class MyCommandSet(CommandSet):
 	async def super_admin(self, message):
 		await message.channel.send("Tu es super admin!")
 
-@command(name='produit', aliases=('prod', 'product', 'Produit', 'Product', 'Prod'), description="Un commande pour multiplier 2 nombres entier a et b: `a*b`. Exemple de commande : `produit 3 2`.")
+@command(name='produit', aliases=('prod', 'product', 'Produit', 'Product', 'Prod'), description="Un commande pour multiplier 2 nombres entier a et b: `a*b`.")
 async def product(message, a: int, b: int):
 	await message.channel.send(f"`{a}*{b} = {a*b}`")
 
@@ -82,7 +82,7 @@ async def check_test(message):
 	await message.channel.send("check is passed")
 
 # Bot
-token = ""
+token = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.SJdLOG8ULdGACoXuDgL3sVEBC2Y"
 bot = Bot(">", token, send_errors=True, sep_args="$", colour=discord.Colour.green())
 bot.add_command(cmd1, description="Une commande pour que le bot te dise bonjour!")
 bot.add_commands({'repeat': cmd2, 'addition': cmd3})
