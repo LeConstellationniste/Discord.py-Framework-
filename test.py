@@ -82,7 +82,7 @@ async def check_test(message):
 	await message.channel.send("check is passed")
 
 # Bot
-token = "NzA5MDI5NDQ4NTY1MTI5MjY2.Xrf9IQ.SJdLOG8ULdGACoXuDgL3sVEBC2Y"
+token = ""
 bot = Bot(">", token, send_errors=True, sep_args="$", colour=discord.Colour.green())
 bot.add_command(cmd1, description="Une commande pour que le bot te dise bonjour!")
 bot.add_commands({'repeat': cmd2, 'addition': cmd3})
