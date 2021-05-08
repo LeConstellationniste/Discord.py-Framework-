@@ -52,7 +52,7 @@ class Command:
 			valid &= check(message)
 		return valid
 
-	async def execute(self, message: discord.Message, *args, cmd_set_instance=None):
+	async def execute(self, message: discord.Message, *args, cmd_set_instance=None, **kwargs):
 		if self.delete_message:
 			await utils.safe_delete(message, delay_=3)
 		if self.check(message):

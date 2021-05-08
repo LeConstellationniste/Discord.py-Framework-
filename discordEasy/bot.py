@@ -1,4 +1,4 @@
-from typing import Union, Dict, Iterable, Coroutine, Callable
+from typing import Union, Dict, Iterable, Coroutine, Callable, Tuple
 
 import inspect
 import traceback
@@ -154,14 +154,22 @@ class Bot(BaseBot):
 			content = message.content[len(self.prefix):]
 			name_command = content.split(" ")[0]
 			content = content[len(name_command)+1:]
-			options = [arg.strip() for arg in content.split(self.sep_args) if len(arg.strip()) > 0]
+			kwargs = {}
+			args = []
+			for arg in content.split(self.sep_args):
+				arg = arg.strip()
+				if len(arg) > 0:
+					if '=' in arg:
+						kwargs[arg.split('=')[0].strip()] = arg.split('=')[1].strip()
+					else:
+						args.append(arg)
 
 			try:
 				for command in self.commands:
 					if command.name_isValid(name_command):
-						await command.execute(message, *options)
+						await command.execute(message, *args, **kwargs)
 				for cmd_set in self.list_set:
-					await cmd_set.execute_cmd(message, name_command, options)
+					await cmd_set.execute_cmd(message, name_command, args, kwargs)
 			except errors.CommandError as e:
 				try:
 					await self.on_command_error(e, message)

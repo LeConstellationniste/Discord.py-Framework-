@@ -19,10 +19,10 @@ class CommandSet:
 		self.name = name if name is not None  else type(self).__name__
 		self.description = ""
 
-	async def execute_cmd(self, message: discord.Message, name: str, options: Iterable) -> None:
+	async def execute_cmd(self, message: discord.Message, name: str, args: list, kwargs: dict) -> None:
 		for cmd in self.commands.values():
 			if cmd.name_isValid(name):
-				await cmd.execute(message, cmd_set_instance=self, *options)
+				await cmd.execute(message, cmd_set_instance=self, *args)
 
 	async def execute_listener(self, event_name: str, *args, **kwargs) -> None:
 		for listener in self.listeners.values():
@@ -63,6 +63,35 @@ class BaseHelp(CommandSet):
 		em.add_field(name="Help command", value=msg_help)
 		return em
 
+	def get_example_args(self, cmd: Command) -> list:
+		return [BaseHelp.types_examples[arg['type']] if arg['type'] in BaseHelp.types_examples
+				else arg['name'] for arg in cmd.args_signature]
+
+	def command_base(self, cmd: Command) -> str:
+		return f"{cmd.description}\n**Name:** `{cmd.name}`"
+
+	def command_use_fmt(self, base_cmd: str, names_args: list) -> str:
+		return f"\n**Use:** `{base_cmd} {' {0}'.join(names_args).format(self.bot.sep_args)}`"
+
+	def command_example(self, base_cmd: str, examples_args: list) -> str:
+		return f"\nExample: `{base_cmd} {' {0}'.join(examples_args).format(self.bot.sep_args)}`" if len(examples_args) > 0 else ""
+	
+	def command_aliases(self, cmd: Command) -> str:
+		return f"""\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}""" if len(cmd.aliases) > 0 else ""
+
+	def command_help_fmt(self, cmd: Command) -> str:
+		base_msg = self.command_base(cmd)
+		base_cmd = f"{self.bot.prefix}{cmd.name}"
+		sep_arg = f" {self.bot.sep_args}"
+		names_args = [arg['name'] for arg in cmd.args_signature]
+		examples_args = self.get_example_args(cmd)
+		use_fmt = self.command_use_fmt(base_cmd, names_args)
+		example = self.command_example(base_cmd, examples_args)
+		aliases = self.command_aliases(cmd)
+		del(names_args)
+		del(examples_args)
+		return base_msg + use_fmt + example + aliases
+
 	def command_pages(self, set_commands: Union[CommandSet, Iterable], author: discord.Member) -> list:
 		title = f"Help {set_commands.name}" if isinstance(set_commands, CommandSet) else f"Help {self.bot.app_info.name}"
 		description = set_commands.description if isinstance(set_commands, CommandSet) else ""
@@ -77,26 +106,17 @@ class BaseHelp(CommandSet):
 				pages.append(em)
 				nb_cmd = 0
 				nb_pages += 1
-			if (type(cmd) == CommandAdmin and isinstance(author, discord.Member) and author.guild_permissions.administrator) or (type(cmd) == CommandSuperAdmin and author.id in cmd.white_list) or type(cmd) == Command:
-				base_msg = f"{cmd.description}\n**Name:** `{cmd.name}`"
-				base_cmd = f"{self.bot.prefix}{cmd.name}"
-				sep_arg = f" {self.bot.sep_args}"
-				names_args = [arg['name'] for arg in cmd.args_signature]
-				examples_args = [BaseHelp.types_examples[arg['type']] if arg['type'] in BaseHelp.types_examples else arg['name'] for arg in cmd.args_signature]
-				use_fmt = f"\n**Use:** `{base_cmd} {sep_arg.join(names_args)}`"
-				example = f"\nExample: `{base_cmd} {sep_arg.join(examples_args)}`" if len(examples_args) > 0 else ""
-				aliases = f"""\nAliases: {list_to_str(cmd.aliases).replace("'", "`")}""" if len(cmd.aliases) > 0 else ""
-				em.add_field(name=f"Command {cmd.name}", value=base_msg + use_fmt + example + aliases, inline=False)
+			if (type(cmd) == CommandAdmin and isinstance(author, discord.Member) and author.guild_permissions.administrator) or\
+				(type(cmd) == CommandSuperAdmin and author.id in cmd.white_list) or type(cmd) == Command:
+				em.add_field(name=f"Command {cmd.name}", value=self.command_help_fmt(cmd), inline=False)
 				nb_cmd += 1
-				del(names_args)
-				del(examples_args)
 		return [em for em in pages if len(em.fields) > 0]
 
 
 	@command(name="help", aliases=("Help", ), delete_message=True, description="The general help command.")
 	async def help(self, msg):
 		def check(reaction, user):
-			return not user.bot and str(reaction.emoji) in ("◀️", "▶️", "⏹️")
+			return not user.bot and reaction.message.id == help_msg.id and str(reaction.emoji) in ("◀️", "▶️", "⏹️")
 
 		pages = [self.first_page(msg.author)] + self.command_pages(self.bot.commands, msg.author)
 		for cmd_set in self.bot.list_set:
@@ -190,5 +210,4 @@ class DevCommands(CommandSet):
 	@staticmethod
 	def setup(bot):
 		bot.add_commands(DevCommands(bot))
-
 
