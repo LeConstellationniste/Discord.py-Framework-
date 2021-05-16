@@ -64,6 +64,8 @@ class BaseHelp(CommandSet):
 		return em
 
 	def get_example_args(self, cmd: Command) -> list:
+		if cmd.example is not None:
+			return cmd.example
 		return [BaseHelp.types_examples[arg['type']] if arg['type'] in BaseHelp.types_examples
 				else arg['name'] for arg in cmd.args_signature]
 

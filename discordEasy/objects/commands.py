@@ -11,7 +11,7 @@ from .. import utils
 # Class Command
 class Command:
 	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [], checks: Iterable[Callable] = [],
-				delete_message: bool = False, description: str = ""):
+				delete_message: bool = False, description: str = "", example: Iterable[str] = None):
 		""" Arguments:
 			* _function: the function to execute, it's the base of command
 			* name: the name of command, if None, the name attribute of function is used. It's the name which is used in Discord to call the command.
@@ -40,6 +40,7 @@ class Command:
 		self.checks = checks
 		self.delete_message = delete_message
 		self.description = description
+		self.example = example
 
 	def name_isValid(self, name: str) -> bool:
 		if isinstance(name, str):
@@ -133,11 +134,14 @@ class CommandSuperAdmin(CommandAdmin):
 # Decorator for easy construction of command
 
 def command(name: str = None, aliases: Iterable[str] = [], checks: Iterable[Callable] = [], delete_message: bool = False,
-			description: str = "", admin: bool = False, super_admin: bool = False, white_list: Iterable[int] = []):
+			description: str = "", example: Iterable[str] = None, admin: bool = False, super_admin: bool = False, white_list: Iterable[int] = []):
 	def decorator(_fct):
 		if super_admin:
-			return CommandSuperAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description, white_list=white_list)
+			return CommandSuperAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message,
+						description=description, example=example, white_list=white_list)
 		elif admin:
-			return CommandAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description)
-		return Command(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message, description=description)
+			return CommandAdmin(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message,
+						description=description, example=example)
+		return Command(_fct, name=name, aliases=aliases, checks=checks, delete_message=delete_message,
+					description=description, example=example)
 	return decorator
