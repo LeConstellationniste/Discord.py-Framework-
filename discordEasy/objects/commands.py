@@ -93,9 +93,8 @@ class Command:
 class CommandAdmin(Command):
 	"""Command for admin of guild."""
 	
-	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [],
-				checks: Iterable[Callable] = [], delete_message: bool = False, description: str = ""):
-		super().__init__(_function, name, aliases, checks, delete_message, description)
+	def __init__(self, _function: Union[Callable, Coroutine], **kwargs):
+		super().__init__(_function, **kwargs)
 
 	async def execute(self, message: discord.Message, *args, cmd_set_instance=None) -> None:
 		if isinstance(message.channel, discord.DMChannel) or isinstance(message.channel, discord.GroupChannel) or message.author.guild_permissions.administrator:
@@ -107,9 +106,8 @@ class CommandAdmin(Command):
 class CommandSuperAdmin(CommandAdmin):
 	"""Command for creator of bot and user in white list. User must be also a administrator."""
 
-	def __init__(self, _function: Union[Callable, Coroutine], name: str = None, aliases: Iterable[str] = [],
-				checks: Iterable[Callable] = [], delete_message: bool = False, description: str = "", white_list: Iterable[int] = []):
-		super().__init__(_function, name, aliases, checks, delete_message, description)
+	def __init__(self, _function: Union[Callable, Coroutine], white_list: Iterable[int] = [], **kwargs):
+		super().__init__(_function, **kwargs)
 		self.white_list = white_list
 
 	def add_user(self, user_id: int) -> None:
